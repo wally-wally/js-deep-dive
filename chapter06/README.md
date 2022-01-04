@@ -137,9 +137,10 @@ Number.isSafeInteger(3.0);                  // true
 
 #### :round_pushpin: Overview
 
-- ES2020에서 새롭게 등장한 `BigInt`는 2<sup>53</sup> 보다 큰 정수를 취급하기 위해 등장했다.
+- ES2020에서 새롭게 등장한 `BigInt`는 2<sup>53</sup> 이상의 큰 정수를 취급하기 위해 등장했다.
 - `BigInt`를 사용하면 숫자에 대한 안전한 정수 제한을 초과하여 큰 정수를 안전하게 저장하고 조작 할 수 있다. 
 - `BigInt`를 만들려면 모든 정수 리터럴에 `n` 접미사를 추가하거나 `BigInt()`를 호출해서 생성할 수 있다.
+- `BigInt`의 더 자세한 내용은 [BigInt - MDN 공식 문서](https://developer.mozilla.org/ko/docs/Web/JavaScript/Reference/Global_Objects/BigInt)를 참고하자.
 
 #### :round_pushpin: 연산
 
