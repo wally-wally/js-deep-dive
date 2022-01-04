@@ -133,6 +133,67 @@ Number.isSafeInteger(3.0);                  // true
 
 ---
 
+### :heavy_plus_sign: `BigInt`
+
+#### :round_pushpin: Overview
+
+- ES2020에서 새롭게 등장한 `BigInt`는 2<sup>53</sup> 보다 큰 정수를 취급하기 위해 등장했다.
+- `BigInt`를 사용하면 숫자에 대한 안전한 정수 제한을 초과하여 큰 정수를 안전하게 저장하고 조작 할 수 있다. 
+- `BigInt`를 만들려면 모든 정수 리터럴에 `n` 접미사를 추가하거나 `BigInt()`를 호출해서 생성할 수 있다.
+
+#### :round_pushpin: 연산
+
+- 기존에 자바스크립트의 `number` 타입에서 표현할 수 있는 안전한 가장 큰 수에 임의의 숫자를 더하게 되면 예상하지 못한 결과가 도출되었다.
+- 하지만 `BigInt`를 사용하면 이런 걱정할 필요 없이 더 큰 수의 연산도 가능하다.
+
+```javascript
+const max = Number.MAX_SAFE_INTEGER; // 9_007_199_254_740_991
+max + 1; // 9_007_199_254_740_992
+max + 2; // 9_007_199_254_740_992
+```
+
+```javascript
+BigInt(Number.MAX_SAFE_INTEGER) + 2n;
+```
+
+- 주의할 점은 `BigInt`는 `number` 타입과 혼합하여 연산을 할 수 없다.
+
+![000](https://user-images.githubusercontent.com/52685250/148062278-4de24951-aac1-4692-8ea9-203d2af893c7.JPG)
+
+#### :round_pushpin: `typeof` 연산자
+
+- `BigInt`는 자바스크립트에서 새롭게 추가된 요소이다.
+- 그래서 `typeof` 연산자로 반환한 해당 데이터 타입은 `"number"`가 아닌 `"bigint"`이다.
+
+```javascript
+typeof 12; // 'number'
+typeof 12n; // 'bigint'
+```
+
+#### :round_pushpin: 기존 `number `타입과 차이
+
+- `BigInt`는 기존 자바스크립트의 `number` 타입과 별개이므로 아래와 같은 수식이 성립된다.
+
+```javascript
+42n !== 42; // true
+42n === BigInt(42); // true
+42n == 42; // true
+```
+
+#### :round_pushpin: falsy한 값인 `BigInt`
+
+- `BigInt`는 기존 `number` 타입과 같은 논리가 적용되어 아래와 같은 수식이 성립된다.
+
+```javascript
+function bigInt() {
+  return 0n ? 'a' : 'b';
+}
+
+console.log(bigInt()); //'b'
+```
+
+---
+
 <br>
 
 ## 2. string
