@@ -154,7 +154,7 @@ max + 2; // 9_007_199_254_740_992
 ```
 
 ```javascript
-BigInt(Number.MAX_SAFE_INTEGER) + 2n;
+BigInt(Number.MAX_SAFE_INTEGER) + 2n; // 9_007_199_254_740_993
 ```
 
 - 주의할 점은 `BigInt`는 `number` 타입과 혼합하여 연산을 할 수 없다.
