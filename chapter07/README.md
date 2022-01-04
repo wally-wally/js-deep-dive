@@ -383,26 +383,27 @@ x = 1, y = 2, z = 3; // 3
 
 <br>
 
-## 8. `typeof ` 연산자
+## 8. `typeof` 연산자
 
 - 피연산자의 데이터 타입을 문자열로 반환한다.
 - `"string"`, `"number"`, `"boolean"`, `"undefined"`, `"symbol"`, `"object"`, `"function"` 중 하나를 반환하며 참고로 `typeof` 연산자가 반환하는 문자열은 7개의 데이터 타입과 정확히 일치하지는 않으니 주의하자.
+- 추가로 ES2020에서는 `BigInt`가 추가되면서 `"bigint"`가 반환되기도 한다.
 
-| x               | typeof x                             |
-| --------------- | ------------------------------------ |
-| `''`            | `"string"`                           |
-| `1`             | `"number"`                           |
-| `NaN`           | `"number"`                           |
-| `true`          | `"boolean"`                          |
-| `undefined`     | `"undefined"`                        |
-| `Symbol()`      | `"symbol"`                           |
-| `null`          | `"object"` <b>(주의!)</b>            |
-| `[]`            | `"object"`                           |
-| `{}`            | `"object"`                           |
-| `new Date()`    | `"object"`                           |
-| `/test/gi`      | `"object"`                           |
-| `12n`           | `"bigint"` (ES202에서 새롭게 추가됨) |
-| `function() {}` | `"function"`                         |
+| x               | typeof x                              |
+| --------------- | ------------------------------------- |
+| `''`            | `"string"`                            |
+| `1`             | `"number"`                            |
+| `NaN`           | `"number"`                            |
+| `true`          | `"boolean"`                           |
+| `undefined`     | `"undefined"`                         |
+| `Symbol()`      | `"symbol"`                            |
+| `null`          | `"object"` <b>(주의!)</b>             |
+| `[]`            | `"object"`                            |
+| `{}`            | `"object"`                            |
+| `new Date()`    | `"object"`                            |
+| `/test/gi`      | `"object"`                            |
+| `12n`           | `"bigint"` (ES2020에서 새롭게 추가됨) |
+| `function() {}` | `"function"`                          |
 
 - 값이 `null` 타입인지 확인할 때는 `typeof` 연산자를 사용하지 말고 일치 연산자(`===`)를 사용하자.
 
