@@ -643,12 +643,13 @@ function OrdinaryToPrimitive(O: object, hint: 'string' | 'number') {
 
 - `toString`, `valueOf` 메서드
 
-| 메서드     | 설명                                   |
-| ---------- | -------------------------------------- |
-| `toString` | 문자열 `"[object Object]"`를 반환한다. |
-| `valueOf`  | 객체 자신을 반환한다.                  |
+| 메서드     | 설명                  |
+| ---------- | --------------------- |
+| `toString` | 문자열로 변환해준다.  |
+| `valueOf`  | 객체 자신을 반환한다. |
 
 ```javascript
+// 객체인 경우
 const user = {name: "John"};
 
 alert(user); // [object Object]
