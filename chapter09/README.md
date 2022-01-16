@@ -236,7 +236,6 @@ console.log(sortedArr); // [2, 3, 4, 5]
   - 즉, 제어문의 조건식과 같이 불리언 값으로 평가되어야 할 문맥에서 Truthy 값은 `true`로, Falsy 값은 `false`로 암묵적 타입 변환된다.
   - `true`로 평가되는 Truthy 값은 무수히 많으므로 `false`로 평가되는 Falsy 값을 알아두면 나머지는 Truthy 값으로 생각하면 된다
   - Falsy 값 : `false`, `undefined`, `null`, `0`, `-0`, `NaN`, `''`(빈 문자열)
-  - <b>주의할 점은 음수는 Truthy 값에 해당한다.</b>
 - 또한 논리 부정 연산자(`!`)를 이용하여 불리언 타입으로 암묵적 타입 변환을 할 수 있다.
 
 ```javascript
@@ -248,7 +247,7 @@ function isFalsy(v) {
 [false, undefined, null, 0, NaN, ''].forEach((v) => console.log(isFalsy(v))); // 모두 true 반환
 ```
 
-- 주의해야할 점은 <b>문자열 타입의 숫자 `0`과 빈 배열(`[]`) 그리고 빈 객체(`{}`)는 Truthy 값</b>이라는 것이다.
+- 주의해야할 점은 <b>문자열 타입의 숫자 `0`과 음수 값과 빈 배열(`[]`) 그리고 빈 객체(`{}`)는 Truthy 값</b>이라는 것이다.
   - <b>보통 불리언 타입으로 변환하기 위해 아래 `isTruthy` 함수와 같이 논리 부정 연산자를 두 번 사용한다.</b>
 
 ```javascript
@@ -257,7 +256,7 @@ function isTruthy(v) {
   return !!v;
 }
 
-['0', [], {}].forEach((v) => console.log(isTruthy(v))); // 모두 true 반환
+['0', -1, [], {}].forEach((v) => console.log(isTruthy(v))); // 모두 true 반환
 ```
 
 <br>
@@ -464,8 +463,280 @@ Boolean([]); // true
 
 <br>
 
-## 4. 타입 변환 내부 로직 살펴보기
+## 4. 타입 변환 내부 연산 자세히 살펴보기
 
 > 이번 절은 책에 나와 있지 않은 내용이지만 타입 변환과 관련하여 더 공부하면서 새롭게 알게 된 내용들을 추가했다.
+>
+> 그 중에서도 자바스크립트에서 숫자가 아닌 값에서 <b><u>숫자로 강제 변환</u></b>할 때 내부적으로 어떤 일이 일어나는지 살펴보도록 하자.
+
+### (1) 숫자로 타입 변환시 내부적으로 사용되는 주요 연산
+
+- 숫자로 강제 변환할 때 내부적으로 사용되는 연산 세 가지를 먼저 살펴보도록 하자.
+- 참고로 자바스크립트의 내부 로직은 원래 C++ 언어로 구성되어 있다.
+- 하지만 이 로직을 자바스크립트 언어로 보기 쉽게 구현해놓은 코드가 있어 자바스크립트 버전으로 올려놓았다.
+
+#### :round_pushpin: `Typeof(value)`
+
+- 함수의 인자 값이 <b>어떤 type인지</b> 반환하는 함수이다.
+
+```javascript
+function TypeOf(value) {
+  const result = typeof value;
+  switch (result) {
+    case 'function':
+      return 'object';
+    case 'object':
+      if (value === null) {
+        return 'null';
+      } else {
+        return 'object';
+      }
+    default:
+      return result;
+  }
+}
+```
+
+<br>
+
+#### :round_pushpin: `ToNumber(argument)`
+
+- 함수의 인자 값을 <b>숫자로 변환</b>하는 내부 로직이다.
+
+```javascript
+function ToNumber(argument) {
+  if (argument === undefined) {
+    return NaN;
+  } else if (argument === null) {
+    return +0;
+  } else if (argument === true) {
+    return 1;
+  } else if (argument === false) {
+    return +0;
+  } else if (TypeOf(argument) === 'number') {
+    return argument;
+  } else if (TypeOf(argument) === 'string') {
+    return parseTheString(argument); // not shown here(내부 로직이 상당히 복잡하다고 함...)
+  } else if (TypeOf(argument) === 'symbol') {
+    throw new TypeError();
+  } else if (TypeOf(argument) === 'bigint') {
+    throw new TypeError();
+  } else {
+    // argument is an object
+    const primValue = ToPrimitive(argument, 'number');
+    return ToNumber(primValue);
+  }
+}
+```
+
+<br>
+
+#### :round_pushpin: `ToPrimitive(input, hint)`
+
+- 어떤 형태든지 <b>원시값(`number`, `string`, `boolean`, `null`, `undefined` 중 하나)으로 변환</b>하는 로직이다.
+- 이 때 두 번째 인자인 `hint`에 의해 어떤 타입으로 변환할지 구분 기준을 세울 수 있다.
+  - `'string'`, `'number'`, `'default'` 세 가지 중 하나가 올 수 있는데 `'string'`, `'number'`는 말 그대로 문자열, 숫자 타입으로 변환하겠다는 의미이다.
+  - `'default'`는 연산자가 기대하는 자료형이 확실하지 않을 때를 의미하며 아주 드물게 발생한다.
+
+```javascript
+function ToPrimitive(input: any, hint: 'string' | 'number' | 'default' = 'default') {
+  if (TypeOf(input) === 'object') {
+    const exoticToPrim = input[Symbol.toPrimitive];
+    if (exoticToPrim !== undefined) {
+      const result = exoticToPrim.call(input, hint);
+      if (TypeOf(result) !== 'object') {
+        return result;
+      }
+      throw new TypeError();
+    }
+    if (hint === 'default') {
+      hint = 'number';
+    }
+    return OrdinaryToPrimitive(input, hint);
+  }
+  // input is already primitive
+  return input;
+}
+```
+
+- 내부 로직 설명
+
+| 케이스                                                       | 설명                                                         |
+| ------------------------------------------------------------ | ------------------------------------------------------------ |
+| `input`의 타입이 `object`이고 `Symbol.toPrimitive` 메소드가 있는 경우 | 결과가 `object`이면 `TypeError`를 발생시키고 아니면 그 결과를 반환한다. |
+| `input`의 타입이 `object`이고 `Symbol.toPrimitive` 메소드가 없는 경우 | 다음에서 설명할 `OrdinaryToPrimitive` 함수를 실행하고 이 때 `hint` 값은 별도의 세팅이 없는 경우 `'number'`로 설정된다. |
+| `input` 타입이 `object`가 아닌 경우                          | `input`을 반환한다.                                          |
+
+- `Symbol.toPrimitive`
+
+  - 목표로 하는 타입(hint)을 명명하는 데 사용된다.
+
+  ```javascript
+  obj[Symbol.toPrimitive] = function(hint) {
+    // 반드시 원시값을 반환해야 한다.
+    // hint는 "string", "number", "default" 중 하나가 될 수 있다.
+  };
+  ```
+
+  - 실제 예시 코드를 보면서 어떤 느낌이지 파악해보자.
+
+  ```javascript
+  const user = {
+    name: "John",
+    money: 1000,
+  
+    [Symbol.toPrimitive](hint) {
+      alert(`hint: ${hint}`);
+      return hint == "string" ? `{name: "${this.name}"}` : this.money;
+    }
+  };
+  
+  // 데모:
+  alert(user); // hint: string -> {name: "John"}
+  alert(+user); // hint: number -> 1000
+  alert(user + 500); // hint: default -> 1500
+  ```
+
+  - 위 코드와 같이 `Symbol.toPrimitive` 내장 심볼을 이용하여 모든 종류의 형 변환을 다룰 수 있다.
+
+<br>
+
+#### :round_pushpin: `OrdinaryToPrimitive(O, hint)`
+
+- O에 내장된 `toString` 또는 `valueOf` 메서드를 통해 타입이 `Object`인 O을 원시값으로 변환한다. 
+- `toString`, `valueOf` 메서드를 통해 원시값으로 변환이 되지 않으면 `TypeError`를 발생한다.
+
+```javascript
+// 특정 메서드를 호출 가능한지 판별하는 함수
+function IsCallable(x) {
+  return typeof x === 'function';
+}
+
+function OrdinaryToPrimitive(O: object, hint: 'string' | 'number') {
+  let methodNames;
+  if (hint === 'string') {
+    methodNames = ['toString', 'valueOf'];
+  } else {
+    methodNames = ['valueOf', 'toString'];
+  }
+  for (const name of methodNames) {
+    const method = O[name];
+    if (IsCallable(method)) {
+      const result = method.call(O);
+      if (TypeOf(result) !== 'object') {
+        return result;
+      }
+    }
+  }
+  throw new TypeError();
+}
+```
+
+- 내부 로직 설명(`hint`가 `'string'`인 경우)
+  - 참고로 `hint`가 `'number'`인 경우는 아래와 동일하고 `valueOf` => `toString` 순서로 메서드를 확인하면 된다.
+
+| 케이스                                                       | 설명                                                         |
+| ------------------------------------------------------------ | ------------------------------------------------------------ |
+| `O.toString`을 호출할 수 있고 `O.toString.call(O)`의 반환 타입이 `'object'`가 아닌 경우(즉, 원시값인 경우) | 그 결과를 즉시 반환한다.                                     |
+| `O.toString`을 호출할 수 있고 `O.toString.call(O)`의 반환 타입이 `'object'`인 경우 | `O.valueOf`를 호출할 수 있는지 확인 후 `O.valueOf.call(O)`의 반환 타입이 `'object'`일 때만 그 결과를 반환한다. |
+| `O.valueOf`를 호출할 수 없고 `O.valueOf.call(O)`의 반환 타입이 `'object'`인 경우 | 원시값이 아니므로 `TypeError`를 반환한다.                    |
+
+- `toString`, `valueOf` 메서드
+
+| 메서드     | 설명                                   |
+| ---------- | -------------------------------------- |
+| `toString` | 문자열 `"[object Object]"`를 반환한다. |
+| `valueOf`  | 객체 자신을 반환한다.                  |
+
+```javascript
+const user = {name: "John"};
+
+alert(user); // [object Object]
+alert(user.valueOf() === user); // true
+```
+
+- 참고로 `ToPrimitive` 함수에서 `Symbol.toPrimitive` 를 직접 만든 예시 코드가 있었는데 이를 아래와 같이 `toString`, `valueOf` 메서드를 조합해서 동일하게 동작하도록 만들 수도 있다.
+
+```javascript
+const user = {
+  name: "John",
+  money: 1000,
+
+  // hint가 "string"인 경우
+  toString() {
+    return `{name: "${this.name}"}`;
+  },
+
+  // hint가 "number"나 "default"인 경우
+  valueOf() {
+    return this.money;
+  }
+};
+
+alert(user); // toString -> {name: "John"}
+alert(+user); // valueOf -> 1000
+alert(user + 500); // valueOf -> 1500
+```
+
+<br>
+
+### (2) 숫자로 타입 변환 케이스 내부 연산 따라가기
+
+#### :heavy_check_mark: `Number('1');`
+
+- `Number` 생성자 함수는 `ToNumber(argument)` 연산이 작동된다.
+- `'1'`의 type이 `'string'`이므로 `parseTheString` 내부 연산을 거치게 되는데 해당 프로세스는 다소 복잡하여 [ECMAScript 공식 문서](https://tc39.es/ecma262/#sec-runtime-semantics-mv-s)로 대체한다.
+
+<br>
+
+#### :heavy_check_mark: `Number([1]);`
+
+- `ToNumber(argument)`  연산
+  - `argument`의 타입이 `object`이므로 `ToPrimitive(input, hint)` 연산으로 넘어간다.
+  - 참고로 마지막에  `ToNumber(argument)` 연산 남은 부분이 있어 다시 돌아올 예정이다.
+- `ToPrimitive(input, hint)` 연산
+  - `input` 값은 `[1]`, `hint`는 주어지지 않으면 `'default'`가 된다.
+  - `[1]`의 타입이 `'object'`이고 `[1][Symbol.toPrimitive]`는 `undefined` 이므로 `OrdinaryToPrimitive(O, hint)` 연산으로 넘어간다.
+  - 이 때 다음 연산으로 넘어갈 때 `hint`는 `'number'`가 된다.
+- `OrdinaryToPrimitive(O, hint)` 연산
+  - 현재 호출되는 연산은 `OrdinaryToPrimitive([1], 'number')`이 된다.
+  - `hint`가 `'number'`이므로 `valueOf` => `toString` 순서로 해당 메서드를 호출할 수 있는지 확인할 것이다.
+  - `valueOf` 메서드의 결과는 `[1]`이고 이 때 타입은 `'object'`이므로 다음 메서드로 넘어간다.
+  - `toString` 메서드의 연산 결과는 `Array.prototype.toString()`에 의해 'string' `타입인 `'1'`이 되고 `'object'` 타입이 아니므로 `'1'`을 반환한다.
+- `ToNumber(argument)`  연산
+  - 이제 마지막으로 `ToNumber('1')` 연산을 실행한다.
+  - 이 과정은 처음에 살펴보면 `Number('1');`과 동일하므로 최종 결과는 숫자 `3`이 된다.
+
+<br>
+
+#### :heavy_check_mark: `Number([1, 2]);`
+
+>  `Number([1]);` 예제와 거의 동일하여 `OrdinaryToPrimitive(O, hint)` 연산부터 살펴보도록하자.
+
+- `OrdinaryToPrimitive(O, hint)` 연산
+  - 현재 호출되는 연산은 `OrdinaryToPrimitive([1, 2], 'number')`이 된다.
+  - `hint`가 `'number'`이므로 `valueOf` => `toString` 순서로 해당 메서드를 호출할 수 있는지 확인할 것이다.
+  - `valueOf` 메서드의 결과는 `[1, 2]`이고 이 때 타입은 `'object'`이므로 다음 메서드로 넘어간다.
+  - `toString` 메서드의 연산 결과는 `Array.prototype.toString()`에 의해 `'string' `타입인 `'1,2'`이 되고 `'object'` 타입이 아니므로 `'1,2'`을 반환한다.
+- `ToNumber(argument)`  연산
+  - 이제 마지막으로 `ToNumber('1,2')` 연산을 실행한다.
+  - `'1,2'`는 숫자로 변환 가능한 문자열이 아니므로 최종 결과는 `NaN`이 된다.
+
+<br>
+
+---
+
+:bookmark: <b>함께 보면 좋은 자료(feat. Reference)</b>
+
+- 지금은 숫자로 강제 타입 변환할 때만 살펴보았지만 `string`, `boolean` 등 다양한 타입으로 변환하는 경우도 있는데 이는 [여기](https://exploringjs.com/deep-js/ch_type-coercion.html)(Javascript 언어로 작성한 타입 변환 내부 연산)를 참고하면 자세히 알 수 있다.
+- 그리고 모던 Javascript 튜토리얼에서도 객체를 원시형으로 변환하는 내용을 [여기](https://ko.javascript.info/object-toprimitive)에 자세히 나와있으니 함께 참고하면 좋을 것 같다.
+
+---
+
+<br>
+
+## 5. 단축 평가
+
+### (1) 논리 연산자를 사용한 단축 평가
 
 (작성중...)
