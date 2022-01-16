@@ -222,7 +222,8 @@ console.log(sortedArr); // [2, 3, 4, 5]
   +(function(){}) // NaN
   ```
 
-- 빈 문자열, 빈 배열, `null`, `false`는 0으로, `true`는 1로 객체와 빈 배열이 아닌 배열, `undefined`는 변환되지 않아 `NaN`이 된다는 것에 주의하자.
+- <b>빈 문자열, 빈 배열, `null`, `false`는 0으로, `true`는 1로 객체와 빈 배열이 아닌 배열, `undefined`는 변환되지 않아 `NaN`이 된다</b>는 것에 주의하자.
+  
   - 숫자 타입으로 변환되는 내부 상세 로직은 `3. 명시적 타입 변환(explicit coercion)` 절이 끝난 후에 내부 로직을 살펴보면서 자세히 더 살펴보기로 하자.
 
 <br>
@@ -235,6 +236,7 @@ console.log(sortedArr); // [2, 3, 4, 5]
   - 즉, 제어문의 조건식과 같이 불리언 값으로 평가되어야 할 문맥에서 Truthy 값은 `true`로, Falsy 값은 `false`로 암묵적 타입 변환된다.
   - `true`로 평가되는 Truthy 값은 무수히 많으므로 `false`로 평가되는 Falsy 값을 알아두면 나머지는 Truthy 값으로 생각하면 된다
   - Falsy 값 : `false`, `undefined`, `null`, `0`, `-0`, `NaN`, `''`(빈 문자열)
+  - <b>주의할 점은 음수는 Truthy 값에 해당한다.</b>
 - 또한 논리 부정 연산자(`!`)를 이용하여 불리언 타입으로 암묵적 타입 변환을 할 수 있다.
 
 ```javascript
@@ -247,6 +249,7 @@ function isFalsy(v) {
 ```
 
 - 주의해야할 점은 <b>문자열 타입의 숫자 `0`과 빈 배열(`[]`) 그리고 빈 객체(`{}`)는 Truthy 값</b>이라는 것이다.
+  - <b>보통 불리언 타입으로 변환하기 위해 아래 `isTruthy` 함수와 같이 논리 부정 연산자를 두 번 사용한다.</b>
 
 ```javascript
 // 전달받은 인수가 Truthy 값이면 true, Falsy 값이면 false를 반환한다.
@@ -257,3 +260,212 @@ function isTruthy(v) {
 ['0', [], {}].forEach((v) => console.log(isTruthy(v))); // 모두 true 반환
 ```
 
+<br>
+
+## 3. 명시적 타입 변환(explicit coercion)
+
+- 개발자의 의도에 따라 명시적으로 타입을 변환하는 것을 명시적 타입 변환이라고 한다.
+  - 그 방법으로 표준 빌트인 생성자 함수를 `new` 연산자 없이 호출하는 방법, 빌트인 메서드를 사용하는 방법, 암묵적 타입 변환을 이용하는 방법이 있다.
+  - 이 때 타입 변환할 때 내부 동작은 `2. 암묵적 타입 변환(implicit coercion)` 절에서 살펴본 내용과 거의 동일하다.
+  - 이번 절에서는 이전 절에서 등장하지 않은 방법에 대해서만 소개하고자 한다.
+
+<br>
+
+### (1) 문자열 타입으로 변환
+
+#### :round_pushpin: `String` 생성자 함수를 `new` 연산자 없이 호출하는 방법
+
+```javascript
+// 숫자 타입 => 문자열 타입
+String(1); // '1'
+String(NaN); // 'NaN'
+String(Infinity); // 'Infinity'
+
+// 불리언 타입 => 문자열 타입
+String(true); // 'true'
+String(false); // 'false'
+
+// 참조 타입 => 문자열 타입
+String([]); // ''
+String([1, 2, 3, 4]); // '1,2,3,4'
+String({}); // '[object Object]'
+```
+
+<br>
+
+#### :round_pushpin: `Object.prototype.toString` 메서드를 사용하는 방법
+
+```javascript
+// 숫자 타입 => 문자열 타입
+(1).toString(); // '1'
+(NaN).toString(); // 'NaN'
+(Infinity).toString(); // 'Infinity'
+
+// 불리언 타입 => 문자열 타입
+(true).toString(); // 'true'
+(false).toString(); // 'false'
+
+// 참조 타입 => 문자열 타입
+([]).toString(); // ''
+([1, 2, 3, 4]).toString(); // '1,2,3,4'
+({}).toString(); // '[object Object]'
+```
+
+<br>
+
+### (2) 숫자 타입으로 변환
+
+#### :round_pushpin: `Number` 생성자 함수를 `new` 연산자 없이 호출하는 방법
+
+```javascript
+// 문자열 타입 => 숫자 타입
+Number('0'); // 0
+Number('-123'); // -123
+Number('12.34'); // 12.34
+Number('12.00'); // 12
+Number('12.30'); // 12.3
+Number('12.34km'); // NaN
+
+// 불리언 타입 => 숫자 타입
+Number(true); // 1
+Number(false); // 0
+
+// 참조 타입 => 숫자 타입
+Number({}); // NaN
+Number([]); // 0
+Number([2]); // 2
+Number(['2']); // 2
+Number([1, 2]); // NaN
+Number([Infinity]); // Infinity
+```
+
+<br>
+
+#### :round_pushpin: `parseInt`, `parseFloat` 함수를 사용하는 방법
+
+- `parseInt` 함수는 정수 형태로, `parseFloat` 함수는 부동소수점 실수 형태로 반환한다.
+
+  - 단, 이 방법은 <b>문자열을 숫자 타입으로 변환할 때만</b> 가능하다.
+
+- 만약, 함수의 인자로 문자열이 아닌 다른 타입을 작성하는 경우 아래와 같이 함수 인자로 `'string'` 타입만 올 수 있다는 에러 메시지를 볼 수 있다.
+
+  - `parseInt(1);` 구문에서 출력되는 error 메시지 및 `parseInt` 함수 설명
+
+    ![parseInt](https://user-images.githubusercontent.com/52685250/149652212-5ecddb95-eeeb-4b35-8c90-7567cbaaa021.png)
+
+  - `parseFloat(1);` 구문에서 출력되는 error 메시지 및 `parseFloat` 함수 설명
+
+    ![parseFloat](https://user-images.githubusercontent.com/52685250/149652213-64939a57-76d5-4695-a6d2-583de4a0f7c9.png)
+
+- 또한 추가적으로 `parseInt` 함수의 경우 두 번째 인자로 몇 진법으로 표시할지 결정하는 `radix` 값을 넘길 수 있다.
+
+  - `radix` 인자는 `?` 에 의해 optional로 넣어도 되고 안 넣어도 무방하지만 eslint의 기본 설정에서는 인자를 넘기라고 되어 있다.
+  - 아무 값도 넘기지 않으면 기본값은 `10`이 되어 십진법으로 반환된다.
+  - 만약 이 eslint 옵션을 해당 line에만 무효화시키고 싶은 경우 아래와 같이 eslint 전용 주석을 그 위에 추가하면 된다.
+
+  ```javascript
+  // eslint-disable-next-line radix
+  parseInt(1);
+  ```
+
+  - `parseInt` 함수의 `radix` 인자에 대한 자세한 설명은 [MDN 공식 문서](https://developer.mozilla.org/ko/docs/Web/JavaScript/Reference/Global_Objects/parseInt#%EC%84%A4%EB%AA%85)를 참고하자.
+
+```javascript
+parseInt('0'); // 0
+parseInt('-123'); // -123
+// parseInt 함수는 정수를 반환한다는 점 주의하자.
+parseInt('12.34'); // 12
+parseFloat('12.34'); // 12.34
+parseInt('hello'); // NaN
+parseFloat('hello'); // NaN
+```
+
+---
+
+### :heavy_plus_sign: `Number` 생성자 함수 vs `parseInt` 함수
+
+- 숫자 타입으로 변환하는 방법 두 가지를 살펴보았다.
+  - 하지만 `Number` 생성자 함수와 `parseInt` 함수에는 약간의 차이가 있다.
+- 우선 두 방법 모두 문자열을 인자로 받으면 해당 문자열을 숫자로 바꿔주는 부분은 동일하다.
+
+```javascript
+Number('1234'); // 1234
+parseInt('1234'); // 1234
+```
+
+- 하지만 아래 예시처럼 문자열이 숫자 아닌 경우에는 출력되는 결과가 차이가 있다.
+  - `Number` 생성자 함수는 파싱할 수 없는 문자가 하나라도 포함된 경우 무조건 `NaN`을 반환하고 `parseInt` 함수는 문자열이 숫자로 시작하는 경우 숫자가 끝날 때까지만 파싱하여 형 변환을 한다.
+  - `parseInt` 함수도 시작이 숫자 형태가 아니라면 `Number` 함수와 마찬가지로 `NaN`을 반환한다.
+
+```javascript
+Number('1000km'); // NaN
+parseInt('1000km'); // 1000
+
+Number('거리:1000km'); // NaN
+parseInt('거리:1000km'); // NaN
+
+Number('1,000'); // NaN
+parseInt('1,000'); // 1
+```
+
+---
+
+#### :round_pushpin: `*` 산술 연산자를 이용하는 방법
+
+```javascript
+// 문자열 타입 => 숫자 타입
+'0' * 1; // 0
+'-123' * 1; // -123
+'12.34' * 1; // 12.34
+'12.00' * 1; // 12
+
+// 불리언 타입 => 숫자 타입
+true * 1; // 1
+false * 0; // 0
+
+// null, undefined 타입
+null * 1; // 0
+undefined * 1; // NaN
+
+// 참조 타입
+[] * 1; // 0
+[2] * 1; // 2
+['34'] * 1'; // 34
+['3'] * ['2']; // 6
+```
+
+<br>
+
+### (3) 불리언 타입으로 변환
+
+#### :round_pushpin: `Boolean` 생성자 함수를 `new` 연산자 없이 호출하는 방법
+
+```javascript
+// 문자열 타입 => 불리언 타입
+Boolean('*'); // true
+Boolean(''); // false
+Boolean('false'); // true
+
+// 숫자 타입 => 불리언 타입
+Boolean(0); // false
+Boolean(1); // true
+Boolean(-1); // true
+Boolean(NaN); // false
+Boolean(Infinity); // true
+
+// null, undefined 타입 => 불리언 타입
+Boolean(null); // false
+Boolean(undefined); // false
+
+// 참조 타입 => 불리언 타입
+Boolean({}); // true
+Boolean([]); // true
+```
+
+<br>
+
+## 4. 타입 변환 내부 로직 살펴보기
+
+> 이번 절은 책에 나와 있지 않은 내용이지만 타입 변환과 관련하여 더 공부하면서 새롭게 알게 된 내용들을 추가했다.
+
+(작성중...)
