@@ -471,7 +471,7 @@ Boolean([]); // true
 
 ### (1) 숫자로 타입 변환시 내부적으로 사용되는 주요 연산
 
-- 숫자로 강제 변환할 때 내부적으로 사용되는 연산 세 가지를 먼저 살펴보도록 하자.
+- 숫자로 강제 변환할 때 내부적으로 사용되는 연산 네 가지를 먼저 살펴보도록 하자.
 - 참고로 자바스크립트의 내부 로직은 원래 C++ 언어로 구성되어 있다.
 - 하지만 이 로직을 자바스크립트 언어로 보기 쉽게 구현해놓은 코드가 있어 자바스크립트 버전으로 올려놓았다.
 
@@ -703,7 +703,7 @@ alert(user + 500); // valueOf -> 1500
   - 현재 호출되는 연산은 `OrdinaryToPrimitive([1], 'number')`이 된다.
   - `hint`가 `'number'`이므로 `valueOf` => `toString` 순서로 해당 메서드를 호출할 수 있는지 확인할 것이다.
   - `valueOf` 메서드의 결과는 `[1]`이고 이 때 타입은 `'object'`이므로 다음 메서드로 넘어간다.
-  - `toString` 메서드의 연산 결과는 `Array.prototype.toString()`에 의해 'string' `타입인 `'1'`이 되고 `'object'` 타입이 아니므로 `'1'`을 반환한다.
+  - `toString` 메서드의 연산 결과는 `Array.prototype.toString()`에 의해 `'string' `타입인 `'1'`이 되고 `'object'` 타입이 아니므로 `'1'`을 반환한다.
 - `ToNumber(argument)`  연산
   - 이제 마지막으로 `ToNumber('1')` 연산을 실행한다.
   - 이 과정은 처음에 살펴보면 `Number('1');`과 동일하므로 최종 결과는 숫자 `3`이 된다.
@@ -725,6 +725,39 @@ alert(user + 500); // valueOf -> 1500
 
 <br>
 
+- Chapter7에서 아래와 같은 예시 코드를 본 적이 있을 것이다.
+
+```javascript
+// 아래 코드는 과연 어떤 결과를 반환할까? 한번 생각해보자.
+var v5 = ['34'];
+console.log(+v5); // ?
+
+var v6 = ['34', '5'];
+console.log(+v6); // ?
+
+var v7 = undefined;
+console.log(+v7); // ?
+
+var v8 = null;
+console.log(+v8); // ?
+```
+
+- 그 때는 어떤 결과가 나올지 생각만 해보았는데 이제는 타입 변환에 대해서 자세히 살펴보았기 때문에 어떤 결과가 나올지 예측할 수 있다.
+
+```javascript
+var v5 = ['34'];
+console.log(+v5); // 34
+
+var v6 = ['34', '5'];
+console.log(+v6); // NaN
+
+var v7 = undefined;
+console.log(+v7); // NaN
+
+var v8 = null;
+console.log(+v8); // 0
+```
+
 ---
 
 :bookmark: <b>함께 보면 좋은 자료(feat. Reference)</b>
@@ -736,8 +769,165 @@ alert(user + 500); // valueOf -> 1500
 
 <br>
 
-## 5. 단축 평가
+## 5. 단축 평가(short-circuit evaluation)
 
 ### (1) 논리 연산자를 사용한 단축 평가
 
-(작성중...)
+- 논리 연산자 중에서 논리곱 연산자(`&&`)와 논리합 연산자(`||`)는 논리 연산의 결과를 결정하는 피연산자를 타입 변환하지 않고 그대로 반환하고 이를 단축 평가라고 한다.
+- 단축 평가는 표현식을 평가하는 도중에 평가 결과가 확정된 경우 나머지 평가 과정을 생략하는 것을 말한다.
+
+| 단축 평가 표현식    | 평가 결과  |
+| ------------------- | ---------- |
+| `true || anything`  | `true`     |
+| `false || anything` | `anything` |
+| `true && anything`  | `anything` |
+| `false && anything` | `false`    |
+
+```javascript
+'apple' || 'banana'; // 'apple'
+true || 'apple'; // true
+'apple' || true; // 'apple'
+false || 'apple'; // 'apple'
+'apple' || false; // 'apple'
+
+'apple' && 'banana'; // 'banana'
+true && 'apple'; // 'apple'
+'apple' && true; // true
+false && 'apple'; // false
+'apple' && false; // false
+```
+
+- 단축 평가를 사용하면 `if` 문을 대체할 수 있다.
+  - 어떤 조건이 Truthy 값일 때 무언가를 해야 한다면 논리곱 연산자 표현식으로 `if` 문을 대체할 수 있다.
+  - 반면 어떤 조건이 Falsy 값일 때 무언가를 해야 한다면 논리합 연산자 표현식으로 `if` 문을 대체할 수 있다.
+
+```javascript
+// before
+const done = true;
+let message = '';
+
+if (done) {
+  message = '완료';
+}
+
+// after
+console.log(done && '완료'); // '완료'
+```
+
+```javascript
+// before
+const done = false;
+let message = '';
+
+if (done) {
+  message = '미완료';
+}
+
+// after
+console.log(done || '미완료'); // '미완료'
+```
+
+<br>
+
+### (2) 객체와 함수에서 단축 평가 적용 예시
+
+#### :round_pushpin: 객체를 가리키기를 기대하는 변수가 `null` 또는 `undefined`가 아닌지 확인하고 프로퍼티를 참조할 때
+
+```javascript
+// error 발생
+const elem = null;
+const value = elem.value; // TypeError: Cannot read property 'value' of null
+```
+
+```javascript
+// 단축 평가로 에러 해결
+const elem = null;
+const value = elem && elem.value; // null
+```
+
+<br>
+
+#### :round_pushpin: 함수 매개변수에 기본값을 설정할 때
+
+```javascript
+// 단축 평가를 사용한 매개변수의 기본값 설정
+function getStringLength(str) {
+  return (str || '').length;
+}
+
+getStringLength(); // 0
+getStringLength('hello'); // 5
+
+// ES6의 매개변수의 기본값 설정
+function getStringLength(str = '') {
+  return str.length;
+}
+
+getStringLength(); // 0
+getStringLength('hello'); // 5
+```
+
+---
+
+### :heavy_plus_sign: ESLint - `no-param-reassign`
+
+![no-param-reassign](https://user-images.githubusercontent.com/52685250/149661079-cfce8929-9b07-4c45-abec-f6fd8eef2ab3.JPG)
+
+- 참고로 책에 나와 있는 예시 코드는 위 이미지와 같다.
+- 하지만 이렇게 작성하는 경우 함수 매개 변수로 들어온 값을 임의로 변경하는 동작을 수행하는 것이다.
+- 비록 지금은 값이 없는 경우 빈 문자열로 처리하는 것 밖에 없지만 다른 코드에서 함수 매개 변수를 받아서 수정 또는 재할당하는 동작을 수행하게 되면 의도하지 않은 동작을 할 수 있기 때문에 이러한 코드 패턴은 권장하지 않는다.
+- 그래서 이러한 패턴을 피해서 `(str || '').length`와 같이 인라인화하여 코드를 수정했다.
+- 또는 두 번째 `getStringLength` 함수와 같이 매개 변수의 기본값을 지정하는 방법으로 작성해도 좋다.
+- ESLint의 `no-param-reassign` 옵션에 대한 상세 내용은 [여기](https://eslint.org/docs/rules/no-param-reassign)를 참고해보자.
+
+---
+
+<br>
+
+### (3) 옵셔널 체이닝 연산자(optional chaining operator)
+
+- ES2020에서 도입된 옵셔널 체이닝 연산자(`?.`)는 <b>좌항의 피연산자가 `null` 또는 `undefined`인 경우 `undefined`를 반환</b>하고, <b>그렇지 않으면 우항의 프로퍼티 참조를 이어간다.</b>
+
+```javascript
+const elem = null;
+const value = elem?.value; // undefined
+```
+
+- 논리곱 연산자(`&&`)는 좌항 피연산자가 `false`로 평가되는 Falsy 값이면 좌항 피연산자를 그대로 반환한다.
+  - 좌항 피연산자가 Falsy 값인 `0`이나 빈 문자열인 경우도 마찬가지다.
+- 반면 옵셔널 체이닝 연산자는 좌항 피연산자가 `false`로 평가되는 Falsy 값이라도 `null` 또는 `undefined`가 아니면 우항의 프로퍼티 참조를 이어간다.
+
+```javascript
+const str = '';
+
+console.log(str && str.length); // ''
+console.log(str?.length); // 0
+```
+
+<br>
+
+### (4) null 병합 연산자(nullish coalescing operator)
+
+- ES2020에서 도입된 null 병합 연산자(`??`)는 <b>좌항의 피연산자가 `null` 또는 `undefined`인 경우 우항의 피연산자를 반환</b>하고, <b>그렇지 않으면 좌항의 피연산자를 반환한다.</b>
+- null 병합 연산자는 변수에 기본값을 설정할 때 유용하다.
+
+```javascript
+const foo = null ?? 'default';
+console.log(foo); // 'default';
+```
+
+- 논리합 연산자(`||`)는 좌항 피연산자가 `false`로 평가되는 Falsy 값이면 우항의 피연산자를 반환한다.
+  - 만약 Falsy 값인 `0`이나 빈 문자열도 기본값으로 유효하다면 예기치 않은 동작이 발생할 수 있다.
+
+```javascript
+const foo = '' || 'default';
+console.log(foo); // 'default'
+```
+
+- 반면 null 병합 연산자는 좌항 피연산자가 `false`로 평가되는 Falsy 값이라도 `null` 또는 `undefined`가 아니면 좌항의 피연산자를 그대로 반환한다.
+
+```javascript
+const foo = '' ?? 'default';
+console.log(foo); // ''
+```
+
