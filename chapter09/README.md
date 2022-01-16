@@ -778,10 +778,10 @@ console.log(+v8); // 0
 
 | 단축 평가 표현식    | 평가 결과  |
 | ------------------- | ---------- |
-| `true || anything`  | `true`     |
-| `false || anything` | `anything` |
-| `true && anything`  | `anything` |
-| `false && anything` | `false`    |
+| true \|\| anything  | `true`     |
+| false \|\| anything | `anything` |
+| true && anything    | `anything` |
+| false && anything   | `false`    |
 
 ```javascript
 'apple' || 'banana'; // 'apple'
