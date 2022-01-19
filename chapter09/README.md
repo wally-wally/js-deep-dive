@@ -186,7 +186,7 @@ console.log(sortedArr); // [2, 3, 4, 5]
 
   ```javascript
   +'' // 0
-  +'0' // 9
+  +'0' // 0
   +'1' // 1
   +'string' // NaN
   ```
@@ -686,7 +686,9 @@ alert(user + 500); // valueOf -> 1500
 #### :heavy_check_mark: `Number('1');`
 
 - `Number` 생성자 함수는 `ToNumber(argument)` 연산이 작동된다.
-- `'1'`의 type이 `'string'`이므로 `parseTheString` 내부 연산을 거치게 되는데 해당 프로세스는 다소 복잡하여 [ECMAScript 공식 문서](https://tc39.es/ecma262/#sec-runtime-semantics-mv-s)로 대체한다.
+- `'1'`의 type이 `'string'`이므로 `parseTheString` 내부 연산을 거쳐서 숫자 `1`이 된다.
+  - 참고로 `parseTheString` 프로세스는 다소 복잡하여 [ECMAScript 공식 문서](https://tc39.es/ecma262/#sec-runtime-semantics-mv-s)로 대체한다.
+
 
 <br>
 
@@ -706,7 +708,7 @@ alert(user + 500); // valueOf -> 1500
   - `toString` 메서드의 연산 결과는 `Array.prototype.toString()`에 의해 `'string' `타입인 `'1'`이 되고 `'object'` 타입이 아니므로 `'1'`을 반환한다.
 - `ToNumber(argument)`  연산
   - 이제 마지막으로 `ToNumber('1')` 연산을 실행한다.
-  - 이 과정은 처음에 살펴보면 `Number('1');`과 동일하므로 최종 결과는 숫자 `3`이 된다.
+  - 이 과정은 처음에 살펴보면 `Number('1');`과 동일하므로 최종 결과는 숫자 `1`이 된다.
 
 <br>
 
