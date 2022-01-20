@@ -760,6 +760,21 @@ var v8 = null;
 console.log(+v8); // 0
 ```
 
+- 그렇다면 아래 코드는 어떤 결과가 나올까?
+
+```javascript
+var v9 = [null];
+console.log(+v9); // ?
+
+var v10 = [undefined];
+console.log(+v10); // ?
+```
+
+- 정답은 둘다 숫자 `0`이 된다.
+  - 왜냐하면 `Array.prototype.toString()` 메소드가 `join` 메소드와 동일한 동작을 하는데 이 때 `join` 메소드를 수행할 때 배열의 원소가 `null`, `undefined`인 경우 빈 문자열로 대체된다고 한다.
+  - 그렇기 때문에 `[null].toString()`, `[undefined].toString()` 모두 빈 문자열 `''`이 되고 최종 결과는 `+'' = 0`이 되는 것이다.
+  - 자세한 내용은 [Array.prototype.toString() - MDN 공식 문서](https://developer.mozilla.org/ko/docs/Web/JavaScript/Reference/Global_Objects/Array/toString)와 [Array.prototype.join() - MDN 공식 문서](https://developer.mozilla.org/ko/docs/Web/JavaScript/Reference/Global_Objects/Array/join)를 참고하자.
+
 ---
 
 :bookmark: <b>함께 보면 좋은 자료(feat. Reference)</b>
