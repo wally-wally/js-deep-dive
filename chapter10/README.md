@@ -414,4 +414,270 @@ console.log(person); // {name: 'Lee'}
 
 ## 7. ES6에서 추가된 객체 리터럴의 확장 기능
 
-(작성중...)
+### (1) 프로퍼티 축약 표현(property shorthand)
+
+```javascript
+// ES5
+var x = 1;
+var y = 2;
+
+var obj = {
+  x: x,
+  y: y,
+};
+
+console.log(obj); // {x: 1, y: 2}
+```
+
+```javascript
+// ES6
+// 변수 이름과 프로퍼티 키가 동일한 이름일 때 프로퍼티 키를 생략할 수 있고 이때 프로퍼티 키는 변수 이름으로 자동 생성된다.
+const x = 1;
+const y = 2;
+
+const obj = { x, y };
+
+console.log(obj); // {x: 1, y: 2}
+```
+
+<br>
+
+### (2) 계산된 프로퍼티 이름(computed property name)
+
+- 문자열 또는 문자열로 타입 변환할 수 있는 값으로 평가되는 표현식을 사용해 프로퍼티 키를 동적으로 생성할 수도 있다.
+  - 단, 프로퍼티 키로 사용할 표현식을 대괄호로 묶어야 하는데 이를 <b>계산된 프로퍼티 이름(computed property name)</b>이라 한다.
+
+```javascript
+// ES5
+// 객체 리터럴 외부에서 대괄호 표기법을 사용해서 프로퍼티 키를 동적 생성함
+
+var prefix = 'prop';
+var index = 0;
+
+var obj = {};
+
+obj[prefix + '-' + ++index] = index;
+obj[prefix + '-' + ++index] = index;
+obj[prefix + '-' + ++index] = index;
+
+console.log(obj); // {prop-1: 1, prop-2: 2, prop-3: 3}
+```
+
+```javascript
+// ES6
+// 객체 리터럴 내부에서도 계산된 프로퍼티 이름으로 프로퍼티 키를 동적 생성할 수 있음
+
+const prefix = 'prop';
+let index = 0;
+
+const obj = {
+  [`${prefix}-${++index}`]: index,
+  [`${prefix}-${++index}`]: index,
+  [`${prefix}-${++index}`]: index,
+};
+
+console.log(obj); // {prop-1: 1, prop-2: 2, prop-3: 3}
+```
+
+```javascript
+// 다른 방식으로 코드 개선
+
+const prefix = 'prop';
+const indexArr = Array(3)
+  .fill(undefined)
+  .map((_, index) => index + 1);
+
+const obj = indexArr.reduce((accObj, currentIndex) => {
+  return {
+    ...accObj,
+    [`${prefix}-${currentIndex}`]: currentIndex,
+  };
+}, {});
+
+console.log(obj); // {prop-1: 1, prop-2: 2, prop-3: 3}
+```
+
+---
+
+### :heavy_plus_sign: Vue.js 프로젝트에서 computed property name을 적용한 사례
+
+> 아래 코드는 Vue.js로 작성한 코드 중 vuex의 `getters` 코드 일부를 발췌한 것이다. (typescript 언어로 작성됨에 유의)
+
+```typescript
+import { FileboxState } from './state';
+
+export enum FileboxGettersType {
+  GET_FILEBOX_LIST = 'Filebox/GET_FILEBOX_LIST',
+  GET_FILEBOX_TOTAL_SIZE = 'Filebox/GET_FILEBOX_TOTAL_SIZE',
+}
+
+export const fileboxGetters = {
+  [FileboxGettersType.GET_FILEBOX_LIST](state: FileboxState) {
+    return state.fileboxList;
+  },
+
+  [FileboxGettersType.GET_FILEBOX_TOTAL_SIZE](state: FileboxState) {
+    return state.fileboxList.reduce((sum, { file_size }) => sum + file_size, 0);
+  },
+};
+
+export type FileboxGetters = typeof fileboxGetters;
+```
+
+#### :round_pushpin: 코드를 이해하는데 도움이 될 만한 개념들
+
+- `enum`
+
+  - 타입스크립트에 있는 문법 중 하나로 특정 값들의 집합을 의미하는 자료형을 의미한다.
+  - 숫자형 이넘, 문자형 이넘이 있다.
+
+  ```typescript
+  // 숫자형 이넘
+  enum Direction {
+    Up = 0,
+    Down = 1,
+    Left = 2,
+    Right = 3,
+  }
+  
+  Direction.Up // 0
+  ```
+
+  ```typescript
+  // 문자형 이넘
+  enum Direction {
+    Up = 'U',
+    Down = 'D',
+    Left = 'L',
+    Right = 'R',
+  }
+  
+  Direction.Up // 'U'
+  ```
+
+- vuex의 `getters`
+
+  - vuex에는 상태를 관리하는 `state`가 있는데 만약 아래 코드 처럼 `state`를 이용하여 두 군데의 vue 파일에서 중복된 코드가 있다고 가정해보자.
+
+  ```vue
+  <!-- A.vue -->
+  
+  <script>
+  export default {
+    computed: {
+      uploadFileCount() {
+        return this.$store.state.uploadFile.length;
+      },
+    }
+  }
+  </script>
+  ```
+
+  ```vue
+  <!-- B.vue -->
+  
+  <script>
+  export default {
+    computed: {
+      uploadFileCount() {
+        return this.$store.state.uploadFile.length;
+      },
+    }
+  }
+  </script>
+  ```
+
+  - 여러 컴포넌트에서 같은 로직을 비효율적으로 중복 사용하고 있는데 vuex의 `state`의 변경이 일어날 때마다 수행되는 로직을 각 컴포넌트의 `computed`에 작성하지 않고 vuex에서 수행되도록 할 수 있는데 이를 `getters` 속성이라고 한다.
+  - `getters`를 사옹하면 코드 가독성도 올라가고 성능에서도 이점이 생긴다.
+
+  ```javascript
+  // store.js (vuex)
+  getters: {
+    uploadFileCount(state) {
+      return state.uploadFile.length;
+    }
+  }
+  ```
+
+  ```vue
+  <!-- A.vue -->
+  
+  <script>
+  export default {
+    computed: {
+      uploadFileCount() {
+        return this.$store.getters.uploadFileCount;
+      },
+    }
+  }
+  </script>
+  ```
+
+  ```vue
+  <!-- B.vue -->
+  
+  <script>
+  export default {
+    computed: {
+      uploadFileCount() {
+        return this.$store.getters.uploadFileCount;
+      },
+    }
+  }
+  </script>
+  ```
+
+#### :round_pushpin: vuex의 `getters` 에 computed property name 적용
+
+![getters](https://user-images.githubusercontent.com/52685250/150671642-85653b22-23e3-47ed-9f0d-35059bebb016.png)
+
+- `fileboxGetters` 라는 객체 안에 선언된 프로퍼티 키 값을 별도로 관리하기 위해 `enum` 이라는 열거형 자료형을 사용했고 `enum`에서 선언한 각 `getter`의 이름을 가져와서 `fileboxGetters` 의 프로퍼티 키 값으로 사용하고 있다.
+- 대괄호 표기법을 통해 작성된 `fileboxGetters` 객체는 실제로 위 이미지와 같이 해석되고, `fileboxGetters['Filebox/GET_FILEBOX_LIST']`와 같이 접근할 수 있다.
+- 참고로 실제로 `vue` 파일에서는 `fileboxGetters['Filebox/GET_FILEBOX_LIST']`와 같이 불러와서 값을 사용하지 않고 `enum` 타입을 export 하여 사용할 `getters` 의 이름을 여기서 가져와서 사용하고 있다.
+- 더 자세한 내용은 `vuex`, `typescript` 개념을 우선 이해하고 다시 살펴보는 것을 추천한다.
+
+```vue
+<script lang="ts">
+import Vue from 'vue';
+import { CheckedFilebox } from './types';
+import { FileboxGettersType } from '@/store/filebox/getters';
+    
+export default Vue.extend({
+  computed: {
+    fileboxList(): CheckedFilebox[] {
+      return this.$store.getters[FileboxGettersType.GET_FILEBOX_LIST];
+    },
+  }
+});
+</script>
+```
+
+---
+
+<br>
+
+### (3) 메서드 축약 표현
+
+```javascript
+// ES5
+var obj = {
+  name: 'Lee',
+  sayHi: function() {
+    console.log('Hi! ' + this.name);
+  },
+};
+
+obj.sayHi(); // Hi! Lee
+```
+
+```javascript
+// ES6
+const obj = {
+  name: 'Lee',
+  sayHi() {
+    console.log(`Hi! ${this.name}`);
+  },
+};
+
+obj.sayHi!(); // Hi! Lee
+```
