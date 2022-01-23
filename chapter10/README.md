@@ -120,4 +120,298 @@ console.log(empty); // {}
 
 ## 3. 프로퍼티(property)
 
+### (1) 프로퍼티의 특징
+
+```javascript
+const person = {
+  name: 'Lee',
+  age: 30,
+};
+```
+
+- <b>객체는 프로퍼티의 집합이며, 프로퍼티는 키와 값으로 구성된다.</b>
+- 프로퍼티를 나열할 때는 쉼표(`,`)로 구분하고 일반적으로 마지막 프로퍼티 뒤에는 쉼표를 사용하지 않으나 사용해도 좋다.
+- 프로퍼티의 키와 값
+
+| 구분      | 설명                                                         |
+| --------- | ------------------------------------------------------------ |
+| 키(key)   | 빈 문자열을 포함하는 모든 문자열 또는 심벌 값(빈 문자열도 가능하지만 키로서의 의미를 갖지 못하므로 권장하지 않음) |
+| 값(value) | 자바스크립트에서 사용할 수 있는 모든 값                      |
+
+<br>
+
+### (2) 프로퍼티 키
+
+- 프로퍼티 키는 프로퍼티 값에 접근할 수 있는 이름으로서 <b>식별자 역할</b>을 한다.
+
+- 심벌 값도 프로퍼티 키로 사용할 수 있지만 일반적으로 문자열을 사용한다.
+
+  - 이때 프로퍼티 키는 문자열이므로 따옴표로 묶어야 한다.
+  - 하지만 식별자 네이밍 규칙을 준수하는 이름, 즉 자바스크립트에서 사용 가능한 유효한 이름인 경우 따옴표를 생략할 수 있다.
+  - 반대로 말하면 식별자 네이밍 규칙을 따르지 않는 이름에는 반드시 따옴표를 사용해야 한다.
+
+- 식별자 네이밍 규칙을 따르지 않는 프로퍼티 키를 사용한 경우
+
+  ```javascript
+  const person = {
+    firstName: 'Ung-mo', // 식별자 네이밍 규칙 준수함
+    'last-name': 'Lee', // 식별자 네이밍 규칙 준수하지 않음
+  };
+  
+  console.log(person); // {firstName: 'Ung-mo', last-name: 'Lee'}
+  ```
+
+  - 위 코드에서 `firstName` 프로퍼티 키는 식별자 네이밍 규칙을 준수하므로 따옴표를 작성하지 않아도 되지만, `last-name`은 준수하지 않았기 때문에 반드시 따옴표를 작성해야 한다.
+  - 자바스크립트 엔진은 따옴표를 생략한 `last-name`을 `-` 연산자가 있는 표현식으로 해석한다.
+
+  ```javascript
+  const person = {
+    firstName: 'Ung-mo',
+    last-name: 'Lee',
+  };
+  
+  // Uncaught SyntaxError: Unexpected token '-'
+  ```
+
+- 문자열 또는 문자열로 평가할 수 있는 표현식을 사용해 프로퍼티 키를 <u>동적으로 생성</u>할 수 있다.
+
+  - 이 경우에는 프로퍼티 키로 사용할 표현식을 대괄호로 묶어야 한다.
+
+  ```javascript
+  let obj = {};
+  const key = 'hello';
+  
+  // ES5: 프로퍼티 키 동적 생성
+  obj[key] = 'world';
+  
+  // ES6: computed property name
+  // obj = { [key]: 'world' };
+  
+  console.log(obj); // {hello: 'world'}
+  ```
+
+- 프로퍼티 키에 문자열이나 심벌 값 외의 값을 사용하면 <u>암묵적 타입 변환을 통해 문자열이 된다.</u>
+
+  - 예를 들어, 프로퍼티 키로 숫자 리터럴을 사용하면 따옴표는 붙지 않지만 내부적으로는 문자열로 변환된다.
+
+  ```javascript
+  const obj1 = {
+    0: 123,
+    1: 456,
+  };
+  
+  console.log(obj1); // {0: 123, 1: 456}
+  
+  console.log(obj1[0]); // 123
+  console.log(obj1['0']); // 456
+  ```
+
+  ```javascript
+  const obj2 = {
+    true: 123,
+    false: 456,
+  };
+  
+  console.log(obj2); // {true: 123, false: 456}
+  
+  console.log(obj2[true]); // 123
+  console.log(obj2['true']); // 123
+  
+  console.log(obj2[false]); // 456
+  console.log(obj2['false']); // 456
+  
+  console.log(obj2[!!false]); // ?
+  console.log(obj2[!!'false']); // ?
+  ```
+
+- `var`, `function`과 같은 예약어를 프로퍼티 키로 사용해도 에러가 발생하지 않으나 예상치 못한 에러가 발생할 여지가 있으므로 권장하지 않는다.
+
+- 또한 이미 존재하는 프로퍼티 키를 중복 선언하면 <u>나중에 선언한 프로퍼티 키가 먼저 선언한 프로퍼티를 덮어쓴다.</u>
+
+  - 이때 에러가 발생하지 않는다는 점에 주의하자.
+
+  ```javascript
+  const obj1 = {
+    name: 'mally',
+    name: 'wally',
+  };
+  
+  console.log(obj1.name); // 'wally'
+  ```
+
+<br>
+
+## 4. 메서드(method)
+
+- 자바스크립틔 함수는 일급 객체다.
+  - 함수는 값으로 취급할 수 있기 때문에 프로퍼티 값으로 사용할 수 있다.
+- 프로퍼티 값이 함수일 경우 일반 함수와 구분하기 위해 <b>메서드(method)</b>라 부른다.
+  - 즉, 메서드는 객체에 묶여 있는 함수를 의미한다.
+
+```javascript
+const circle = {
+  radius: 5,
+  getDiameter: function() {
+    return 2 * this.radius; // this는 circle 객체를 가리킨다.
+  }
+};
+
+console.log(circle.getDiameter()); // 10
+```
+
+- 메서드 내부에서 사용한 `this` 키워드는 객체 자신을 가리키는 참조 변수가 된다.
+
+  - 이에 대해서는 나중에 더 자세히 살펴보자.
+
+  ```javascript
+  const obj = {
+    v1: 12,
+    v2: 34,
+    f1: function() {
+      console.log(this);
+    },
+    f2: () => {
+      console.log(this);
+    },
+    f3: function() {
+      function subf3() {
+        console.log(this);
+      }
+        
+      subf3();
+    },
+    f4: function() {
+      const subf4 = () => {
+        console.log(this);
+      }
+        
+      subf4();
+    },
+  }
+  
+  console.log(obj.f1()); // ?
+  console.log(obj.f2()); // ?
+  console.log(obj.f3()); // ?
+  console.log(obj.f4()); // ?
+
+<br>
+
+## 5. 프로퍼티 접근
+
+- 프로퍼티에 접근하는 방법
+  - 마침표 프로퍼티 접근 연산자(`.`)를 사용하는 <b>마침표 표기법</b>
+  - 대괄호 프로퍼티 접근 연산자(`[ ... ]`)를 사용하는 <b>대괄호 표기법</b>
+
+```javascript
+const person = {
+  name: 'Lee',
+};
+
+console.log(person.name); // Lee
+console.log(person['name']); // Lee
+```
+
+- 대괄호 표기법을 사용하는 경우 프로퍼티 키는 반드시 따옴표로 감싼 문자열이어야 한다.
+- 또한 객체에 존재하지 않는 프로퍼티에 접근하면 `undefined`를 반환한다.
+  - 이때 `ReferenceError`가 발생하지 않는데 주의하자.
+
+```javascript
+const person = {
+  name: 'Lee',
+};
+
+console.log(person.age); // undefined
+```
+
+- 프로퍼티 키가 식별자 네이밍 규칙을 준수하지 않는 이름, 즉 자바스크립트에서 사용 가능한 유효한 이름이 아니면 반드시 대괄호 표기법을 사용해야 한다.
+  - 단, 프로퍼티 키가 숫자로 이뤄진 문자열인 경우 따옴표를 생략할 수 있따.
+  - 그 외의 경우 대괄호 내에 들어가는 프로퍼티 키는 반드시 따옴표로 감싼 문자열이어야 한다는 점을 잊지 말자.
+
+```javascript
+const person = {
+  'last-name': 'Lee',
+  1: 123,
+};
+
+person.'last-name'; // Uncaught SyntaxError: Unexpected string
+person.last-name; // 브라우저 환경: NaN / Node.js 환경: ReferenceError: name is not defined
+
+person[last-name]; // Uncaught ReferenceError: last is not defined
+person['last-name']; // Lee
+
+person.1; // Uncaught SyntaxError: Unexpected number
+person.'1'; // Uncaught SyntaxError: Unexpected string
+person[1]; // 123 : person[1] => person['1']
+person['1']; // 123
+```
+
+- 위 코드에서 `person.last-name`이 구동하는 환경에 따라 결과가 다르게 나오는 이유를 간략히 살펴보자.
+  - `person.last-name`을 실행할 때 자바스크립트 엔진은 `person.last`를 먼저 평가하는데 평가 결과는 `undefined`가 된다.
+  - `person.last-name` 은 `undefined-name`과 같고 자바스크립트 엔진은 이어서 `name` 식별자를 찾는데 이때 `name`을 프로퍼티 키가 아닌 <u>식별자로 해석</u>되는 것에 주의해야 한다.
+  - Node.js 환경에서는 어디에도 `name` 식별자 선언이 없으므로 `ReferenceError`가 발생하지만 브라우저 환경에서는 `name` 이라는 전역 변수가 암묵적으로 존재한다.(`window.name`은 현재 열린 창을 의미하며 기본값은 빈 문자열임)
+  - 그래서 브라우저 환경에서 `person.last-name`은 `undefined - ''`와 같으므로 `NaN`이 된다.
+- 그렇다면 아래와 같은 코드에서는 어떤 결과가 반환될지 예상해보자.
+
+```javascript
+const obj = {
+  'hello-world': 'wow',
+};
+
+console.log(obj.hello-world); // ?
+```
+
+<br>
+
+## 6. 프로퍼티의 C, U, D
+
+### (1) 프로퍼티 값 갱신(Update)
+
+```javascript
+const person = {
+  name: 'Lee',
+};
+
+person.name = 'Kim';
+
+console.log(person); // {name: 'Kim'}
+```
+
+<br>
+
+### (2) 프로퍼티 동적 생성(Create)
+
+```javascript
+const person = {
+  name: 'Lee',
+};
+
+person.age = 30;
+
+console.log(person); // {name: 'Lee', age: 30}
+```
+
+<br>
+
+### (3) 프로퍼티 삭제(Delete)
+
+```javascript
+const person = {
+  name: 'Lee',
+  age: 30,
+};
+
+// delete 연산자로 객체의 프로퍼티를 삭제한다.
+// 이때 delete 연산자의 피연산자는 프로퍼티 값에 접근할 수 있는 표현식이어야 한다.
+delete person.age;
+
+// 만약 존재하지 않는 프로퍼티를 삭제하면 아무런 에러 없이 무시된다.
+delete person.address;
+
+console.log(person); // {name: 'Lee'}
+```
+
+<br>
+
+## 7. ES6에서 추가된 객체 리터럴의 확장 기능
+
 (작성중...)
