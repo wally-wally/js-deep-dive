@@ -774,6 +774,15 @@ console.log(+v10); // ?
   - 왜냐하면 `Array.prototype.toString()` 메소드가 `join` 메소드와 동일한 동작을 하는데 이 때 `join` 메소드를 수행할 때 배열의 원소가 `null`, `undefined`인 경우 빈 문자열로 대체된다고 한다.
   - 그렇기 때문에 `[null].toString()`, `[undefined].toString()` 모두 빈 문자열 `''`이 되고 최종 결과는 `+'' = 0`이 되는 것이다.
   - 자세한 내용은 [Array.prototype.toString() - MDN 공식 문서](https://developer.mozilla.org/ko/docs/Web/JavaScript/Reference/Global_Objects/Array/toString)와 [Array.prototype.join() - MDN 공식 문서](https://developer.mozilla.org/ko/docs/Web/JavaScript/Reference/Global_Objects/Array/join)를 참고하자.
+- 지금까지 살펴본 내용을 토대로 `+v11`와 `+v12`가 어떤 값으로 평가될지 예측해보자.
+
+```javascript
+var v11 = [null, undefined];
+console.log(+v11); // ?
+
+var v12 = ++[[]][+[]]+[+[]];
+console.log(+v12); // ?
+```
 
 ---
 
