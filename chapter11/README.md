@@ -370,4 +370,237 @@ var b = new foo(2); // (b)
 
 ### (3) 변경 가능한 값
 
-(작성중...)
+- 원시 값을 할당한 변수를 참조하면 메모리에 저장되어 있는 원시 값에 접근한다.
+- 하지만 객체를 할당한 변수를 참조하면 메모리에 저장되어 있는 <b>참조 값(reference value)</b>을 통해 실제 객체에 접근한다.
+- 객체의 할당 과정
+
+```javascript
+var user = {
+  name: 'wally',
+};
+
+console.log(user); // {name: "wally"}
+```
+
+<img src="https://user-images.githubusercontent.com/52685250/152636680-60cae743-f82b-41b8-b7c8-e9fe010c6873.JPG" width="600">
+
+- 변경 가능한 객체
+  - 원시 값과 다르게 객체는 재할당 없이 객체를 직접 변경할 수 있다.
+  - 아래 예시 코드와 같이 프로퍼티를 동적으로 추가할 수도 있고 프로퍼티 값을 갱신할 수도 있으며 프로퍼티 자체를 삭제할 수도 있다.
+  - 객체는 원시 값과 달리 변수에 재할당을 하지 않았으므로 객체를 할당한 변수의 참조 값을 아래 그림과 같이 변경되지 않는다.
+
+```javascript
+var user = {
+  name: 'wally',
+};
+
+// 프로퍼티 값 갱신
+user.name = 'wallywally';
+
+// 프로퍼티 동적 생성
+user.zipCode = 12345;
+
+console.log(user); // {name: "wallywally", zipCode: 12345}
+```
+
+<img src="https://user-images.githubusercontent.com/52685250/152636758-ee1a101e-c750-45c7-8423-75ae57ba12fc.JPG" width="600">
+
+- 객체 복사시 trade off
+
+  - 객체를 생성하고 관리하는 방식은 매우 복잡하며 비용이 많이 드는 일이다.
+  - 객체를 변경할 때마다 원시 값처럼 이전 값을 복사해서 새롭게 생성한다면 명확하고 신뢰성이 확보되겠지만 객체는 크기가 매우 클 수도 있고, 원시 값처럼 크기가 일정하지도 않으며, 프로퍼티 값이 객체일 수도 있어 복사해서 생성하는 비용이 많이 든다.
+  - 따라서 메모리를 효율적으로 사용하기 위해, 그리고 객체를 복사해 생성하는 비용을 절약하여 성능을 향상시키기 위해 객체는 변경 가능한 값으로 설계되어 있다.
+  - 메모리 사용의 효용성과 성능을 위해 어느 정도의 구조적인 단점을 감안한 설계라고 할 수 있다.
+
+- 객체의 얕은 복사(shallow copy) vs 깊은 복사(deep copy)
+
+  - 얕은 복사(shallow copy)는 객체의 <b>한 단계까지만 복사</b>하는 것을 말하고 깊은 복사(deep copy)는 객체에 <b>중첩되어 있는 객체까지 모두 복사</b>하는 것을 말한다.
+    - 얕은 복사와 깊은 복사로 생성된 객체는 원본과는 다른 객체다.
+      - 즉, 원본과 복사본은 참조 값이 다른 별개의 객체다.
+
+  - 하지만 얕은 복사는 객체에 중첩되어 있는 객체의 경우 <b>참조 값을 복사</b>하고 깊은 복사는 객체에 중첩되어 있는 객체까지 <b>모두 복사해서 원시 값처럼 완전한 복사본을 만든다</b>는 차이가 있다.
+
+---
+
+### :heavy_plus_sign: 객체의 얕은 복사(shallow copy) 방법
+
+#### :round_pushpin: `Object.assign()` 메서드 - [MDN 공식 문서](https://developer.mozilla.org/ko/docs/Web/JavaScript/Reference/Global_Objects/Object/assign)
+
+```javascript
+const obj = {
+  x: 1,
+  y: {
+    z: 2,
+  },
+};
+
+const newObj = Object.assign({}, obj);
+
+newObj.x = 0;
+newObj.y.z = 3;
+
+console.log(obj); // {x: 1, y: {z: 3}}
+console.log(newObj); // {x: 0, y: {z: 3}}
+```
+
+<br>
+
+#### :round_pushpin: 전개 연산자(Spread Operator) - [MDN 공식 문서](https://developer.mozilla.org/ko/docs/Web/JavaScript/Reference/Operators/Spread_syntax)
+
+```javascript
+const obj = {
+  x: 1,
+  y: {
+    z: 2,
+  },
+};
+
+const newObj = { ...obj };
+
+newObj.x = 0;
+newObj.y.z = 3;
+
+console.log(obj); // {x: 1, y: {z: 3}}
+console.log(newObj); // {x: 0, y: {z: 3}}
+```
+
+<br>
+
+### :heavy_plus_sign: 객체의 깊은 복사(deep copy) 방법
+
+#### :round_pushpin: JSON 객체 메소드 이용 - `JSON.stringify()` - [MDN 공식 문서](https://developer.mozilla.org/ko/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify), `JSON.parse()` - [MDN 공식 문서](https://developer.mozilla.org/ko/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse)
+
+```javascript
+const obj = {
+  x: 1,
+  y: {
+    z: 2,
+  },
+};
+
+const newObj = JSON.parse(JSON.stringify(obj));
+
+newObj.x = 0;
+newObj.y.z = 3;
+
+console.log(obj); // {x: 1, y: {z: 2}}
+console.log(newObj); // {x: 0, y: {z: 3}}
+```
+
+- 하지만 이 방법은 치명적인 단점 두 가지가 있다.
+  - 다른 방법에 비해 성능이 느리다.
+  - `JSON.stringify()` 메서드는 함수를 만났을 때 `undefined`로 처리한다.
+
+```javascript
+const obj = {
+  x: 1,
+  y: {
+    z: 2,
+  },
+  f1: function() {
+    return this.x;
+  }
+};
+
+const newObj = JSON.parse(JSON.stringify(obj));
+
+console.log(newObj); // {x: 1, y: {z: 2}}
+console.log(newObj.f1); // undefined
+```
+
+<br>
+
+#### :round_pushpin: lodash 라이브러리의 `cloneDeep()` 메서드 - [공식 문서(4.17.15 버전)](https://lodash.com/docs/4.17.15#cloneDeep)
+
+> 참고로 커스텀 재귀 함수로 구현할 수 있지만 많은 개발자들에 의해 검증되어 있고 오래동안 쓰여온 lodash의 `cloneDeep()` 메서드 사용하는 것을 권장한다.
+
+```bash
+npm i lodash
+```
+
+```javascript
+// tree shaking 기법을 이용해서 lodash의 메서드 중 사용할 메서드만 가져오는 방식
+import cloneDeep from 'lodash/cloneDeep';
+
+const obj = {
+  x: 1,
+  y: {
+    z: 2,
+  },
+  f1: function() {
+    return this.x;
+  }
+};
+
+const newObj = cloneDeep(obj);
+
+newObj.x = 0;
+newObj.y.z = 3;
+
+console.log(obj); // {x: 1, y: {z: 2}, f1: f()}
+console.log(obj.f1()); // 1
+console.log(newObj); // {x: 0, y: {z: 3}, f1: f()}
+console.log(newObj.f1()); // 0
+```
+
+<br>
+
+### (4) 참조에 의한 전달
+
+- 자바스크립트의 객체는 원시 값과는 다르게 여러 개의 식별자가 하나의 객체를 공유할 수 있다.
+- 이로 인한 부작용이 존재하는데 이미 위에서 객체의 얕은 복사와 깊은 복사를 통해서 살펴보았지만 다시 한 번 더 정리해보자.
+
+```javascript
+var user = {
+  name: 'wally',
+};
+
+// 참조 값을 복사(얕은 복사)
+var copyUser = user;
+```
+
+- 객체를 가리키는 변수(원본, `user`)를 다른 변수(사본, `copyUser`)에 할당하면 원본의 <b>참조 값이 복사되어 전달</b>되는데 이를 <b>참조에 의한 전달</b>이라 한다.
+
+![참조에 의한 전달](https://user-images.githubusercontent.com/52685250/152638691-c9ef9494-3e8e-43ba-88ea-22aa9290b137.JPG)
+
+- 위 그림처럼 원본 `user`를 사본 `copyUser`에 할당하면 원본 `user`의 참조 값을 복사해서 `copyUser`에 저장한다.
+  - 이때 원본 `user`와 사본 `copyUser`는 저장된 메모리 주소는 다르지만 동일한 참조 값을 갖는다.
+  - 다시 말해, 두 변수 모두 동일한 객체를 가리키며 이는 <b>두 개의 식별자가 하나의 객체를 공유</b>한다는 것을 의미한다.
+- 이러한 특성으로 인해 어느 한 쪽에서 객체를 변경하면 서로 영향을 주고받는다.
+
+```javascript
+var user = {
+  name: 'wally',
+};
+
+var copyUser = user;
+
+console.log(user === copyUser); // true
+
+copyUser.name = 'wallywally';
+copyUser.zipCode = 12345;
+
+console.log(user); // {name: "wallywally", zipCode: 12345}
+console.log(copyUser); // {name: "wallywally", zipCode: 12345}
+```
+
+- 결국 '값에 의한 전달'과 '참조에 의한 전달'은 식별자가 기억하는 <b>메모리 공간에 저장되어 있는 값을 복사해서 전달한다</b>는 면에서 동일하다.
+  - 다만 식별자가 기억하는 메모리 공간, 즉 변수에 저장되어 있는 값이 <b>원시 값이냐 참조 값이냐의 차이</b>만 있을 뿐이다.
+
+```javascript
+var user1 = {
+  name: 'wally',
+};
+
+var user2 = {
+  name: 'wally',
+};
+
+console.log(user1 === user2); // (1)
+console.log(user1.name === user2.name); // (2)
+```
+
+| 문제 | 결과    | 이유                                                         |
+| ---- | ------- | ------------------------------------------------------------ |
+| (1)  | `false` | `user1` 변수와 `user2` 변수가 가리키는 객체는 비록 내용은 같지만 다른 메모리에 저장된 별개의 객체이기 때문이다. |
+| (2)  | `true`  | 프로퍼티 값을 참조하는 `user1.name`, `user2.name`은 값으로 평가될 수 있는 표현식이고 모두 원시 값 `'wally'`로 평가되기 때문이다. |
