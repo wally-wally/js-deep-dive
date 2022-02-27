@@ -284,4 +284,255 @@ console.log(add(2, 5)); // 7
 
 ## 5. 함수 호출
 
+### (1) 매개변수와 인수
+
+- 함수를 실행하기 위해 필요한 값을 함수 외부에서 함수 내부로 전달할 필요가 있는 경우, <b>매개변수(parameter)</b>를 통해 <b>인수(argument)</b>를 전달한다.
+  - 이때 인수는 값으로 평가될 수 있는 표현식이어야 한다.
+  - 인수는 함수를 호출할 때 지정하며, 개수와 타입에 제한이 없다.
+- 매개변수는 함수 몸체 내부에서만 참조할 수 있고 함수 몸체 외부에서는 참조할 수 없다.
+  - 즉, <b>매개변수의 스코프는 함수 내부</b>다.
+
+```javascript
+// 함수 선언문
+function add(x, y) {
+  return x + y;
+}
+
+// 함수 호출
+// 인수 1과 2가 매개변수 x와 y에 순서대로 할당되고 함수 몸체의 문들이 실행된다.
+var result = add(1, 2);
+
+console.log(result); // 3
+
+// add 함수의 매개변수 x, y는 함수 몸체 내부에서만 참조할 수 있다.
+console.log(x, y); // ReferenceError: x is not defined
+```
+
+- 함수는 <b>매개변수의 개수와 인수의 개수가 일치하는지 체크하지 않는다.</b>
+  - 인수가 부족해서 인수가 할당되지 않은 매개변수의 값은 `undefined`이며 매개변수보다 인수가 더 많은 경우 초과된 인수는 무시된다.
+  - 매개변수보다 인수가 더 많은 경우 초과된 인수는 무시된다고 했지만 모든 인수는 암묵적으로 함수 내부에서 `arguments` 객체의 프로퍼티로 보관된다.
+  - 참고로 `arguments` 객체는 매개변수의 개수를 확정할 수 없는 가변 인자 함수를 구현할 때 유용하게 사용되고 <u>유사 배열 객체</u>라는 점도 잊지 말자.
+
+```javascript
+function add(x, y) {
+  return {
+    arguments,
+    result: x + y,
+  }
+}
+
+// 2 + undefined의 평가 결과는 NaN이다.
+console.log(add(2)); // { arguments: Arguments [2, callee: ƒ, Symbol(Symbol.iterator): ƒ], result: NaN }
+
+console.log(add(2, 5, 9)); // { arguments: Arguments [2, 5, 9, callee: ƒ, Symbol(Symbol.iterator): ƒ], result: 7 }
+```
+
+<br>
+
+### (2) 인수 확인
+
+- 자바스크립트에서 함수는 아래와 같은 특징을 가진다.
+  - 자바스크립트 함수는 매개변수와 인수의 개수가 일치하는지 확인하지 않는다.
+  - 자바스크립트는 동적 타입 언어다. 따라서 자바스크립트 함수는 매개변수의 타입을 사전에 지정할 수 없다.
+- 따라서 자바스크립트의 경우 함수를 정의할 때 적절한 인수가 전달되었는지 확인할 필요가 있다.
+  - 만약 아래 코드에서 if문과 같은 타입 체크 로직이 없다면 console.log에 찍히는 결과는 각각 `NaN`, `'ab'`가 되어 숫자를 더하는 함수의 역할을 충실히 수행하지 못하는 `add` 함수가 될 것이다.
+
+```javascript
+function add(x, y) {
+  if (typeof x !== 'number' || typeof y !== 'number') {
+    throw new TypeError('인수는 모두 숫자 값이어야 합니다.');
+  }
+    
+  return x + y;
+}
+
+console.log(add(2)); // Uncaught TypeError: 인수는 모두 숫자 값이어야 합니다.
+console.log(add('a', 'b')); // Uncaught TypeError: 인수는 모두 숫자 값이어야 합니다.
+```
+
+- 사실 이러한 문제를 제일 깔끔하게 해결하는 방법은 정적 타입 언어인 타입스크립트를 사용해서 인수의 타입을 지정하는 것이다.
+  - 만약 인수에 `number` 타입이 아닌 다른 타입의 값을 넘기면 코드를 실행하기 전 에디터상에서 에러를 내뿜을 것이다.
+
+```typescript
+function add(x: number, y: number) {
+  return x + y;
+}
+```
+
+- 이번에는 인수의 타입이 아닌 인수의 개수에 대해서 살펴보자.
+  - 보통 `arguments` 객체를 통해 인수 개수를 확인할 수 있지만 인수가 전달되지 않은 경우 단축 평가를 사용해 매개변수에 기본값을 할당하는 방법도 있다.
+
+```javascript
+function add(a, b, c) {
+  a = a || 0;
+  b = b || 0;
+  c = c || 0;
+  return a + b + c;
+}
+
+console.log(add(1, 2, 3)); // 6
+console.log(add(1, 2)); // 3
+console.log(add(1)); // 1
+console.log(add()); // 0
+```
+
+```javascript
+// ES6에서 도입된 매개변수 기본값을 사용한 구문
+// 매개변수 기본값은 매개변수에 인수를 전달하지 않았을 경우와 undefined를 전달한 경우에만 유효하다.
+function add(a = 0, b = 0, c = 0) {
+  return a + b + c;
+}
+
+console.log(add(1, 2, 3)); // 6
+console.log(add(1, 2)); // 3
+console.log(add(1)); // 1
+console.log(add()); // 0
+```
+
+```javascript
+// (추가) arguments 객체를 이용하여 인수로 들어온 모든 값을 더하는 함수 만들기
+// arguments를 사용하면 매개변수 a, b, c도 필요없게 된다.
+function add() {
+  return Array.from(arguments).reduce((acc, curr) => acc + curr, 0);
+}
+```
+
+<br>
+
+### (3) 매개변수의 최대 개수
+
+- ECMAScript 사양에서는 매개변수의 최대 개수에 대해 명시적으로 제한하고 있지 않지만 너무 많은 매개변수를 지정하는 것은 좋지 않다.
+- 매개변수는 순서에 의미가 있어 매개변수가 많아지면 함수를 호출할 때 인수의 순서를 고려해야한다.
+  - 만약 순서가 변경되는 경우 함수의 호출 방법도 바뀌므로 함수를 사용하는 코드 전체가 영향을 받아 유지보수가 안 좋아진다.
+- 함수의 매개변수는 코드를 이해하는 데 방해되는 요소이므로 이상적인 매개변수 개수는 0개이며 적을수록 좋다. 이는 리팩토링 관점에서 매우 중요한 부분이라 다시 한번 읽고 넘어가자.
+  - 이상적인 함수는 한 가지 일만 해야 하며 가급적 작게 만들어야 한다.
+- 함수의 매개변수는 최대 3개 이상을 넘지 않는 것을 권장하고 그 이상 필요하다면 객체로 묶는 방법을 권장한다.
+
+```javascript
+// before
+function setCookie(name, value, expires, path, domain, secure) {
+  // 생략
+}
+
+// after
+function setCookie({ name, value, expires, path, domain, secure }) {
+  // 생략
+}
+```
+
+- 객체를 인수로 사용하게 되면 프로퍼티 키만 정확히 지정하면 매개변수의 순서를 신경 쓰지 않아도 된다.
+- 하지만 객체를 인수로 사용할 때 주의할 점은 함수 외부에서 내부로 전달한 객체를 내부에서 변경할 때 부수 효과가 발생할 수 있는데 이는 12.6 단락에서 자세히 살펴보자.
+
+<br>
+
+### (4) 반환문
+
+- 함수는 `return` 키워드와 표현식으로 이뤄진 반환문을 사용해 실행 결과를 함수 외부로 반환할 수 있다.
+- 그리고 `return` 문 뒤에 작성된 구문들은 자연스레 무시되니 주의해야 한다.
+
+```javascript
+function multiply(x, y) {
+  return x * y; // 반환문
+}
+
+// 함수 호출은 표현식이고 이는 반환값으로 평가된다.
+var result = multiply(3, 5);
+console.log(result); // 15
+```
+
+- 반환문의 역할 (1) - 함수의 실행을 중단하고 함수 몸체를 빠져나감
+
+```javascript
+function foo(x) {
+  if (x < 10) {
+    console.log('빠져 나감');
+    return;
+  }
+    
+  console.log('끝까지 실행됨');
+}
+
+foo(1); // 빠져 나감
+foo(11); // 끝까지 실행됨
+```
+
+- 반환문의 역할 (2) - `return` 키워드 뒤에 오는 표현식을 평가해 반환함
+  - 만약 아래 코드처럼 `return` 키워드 뒤에 명시적으로 표현식을 쓰지 않거나 `return` 키워드가 생략되면 `undefined`가 반환된다.
+
+```javascript
+function foo() {
+  return;
+}
+
+function bar() {}
+
+console.log(foo()); // undefined
+console.log(bar()); // undefined
+```
+
+- 반환문은 함수 몸체 내부에서만 사용할 수 있다.
+  - 전역에서 반환문을 사용하면 문법 에러(`SyntaxError: Illegal return statement`)가 발생한다.
+  - 참고로 `Node.js`는 파일별로 독립적인 파일 스코프를 갖기 때문에 파일의 가장 바깥 영역에 반환문을 사용해도 에러가 발생하지 않는다.
+
+```html
+<!DOCTYPE html>
+<html>
+<body>
+  <script>
+    return; // SyntaxError: Illegal return statement
+  </script>
+</body>
+</html>
+```
+
+<br>
+
+## 6. 참조에 의한 전달과 외부 상태의 변경
+
+```javascript
+function changePrimitive(value) {
+  value = 'abc';
+}
+
+function changeObject(obj) {
+  obj.a = 20;
+}
+
+var text = 'xyz';
+var obj1 = {
+  a: 10,
+};
+
+console.log(text); // 'xyz'
+console.log(obj); // { a: 10 }
+
+// 원시 값은 값 자체가 복사되어 전달된다.
+changePrimitive(text);
+
+// 객체는 참조 값이 복사되어 전달된다.
+changeObject(obj1);
+
+// 원시 값은 원본이 훼손되지 않는다.
+console.log(text); // 'xyz'
+
+// 객체는 원본이 훼손된다.
+console.log(obj1); // { a: 20 }
+```
+
+- 원시 타입 인수를 전달받은 `changePrimitive` 함수에서는 원시 값은 변경 불가능한 값이므로 직접 변경할 수 없어 재할당을 통해 할당된 원시 값을 새로운 원시 값으로 교체했다.
+  - 원시 타입 인수는 값 자체가 복사되어 매개변수에 전달되므로 함수 몸체에서 그 값을 변경해도 원본은 훼손되지 않는다.
+- 객체 타입 인수를 전달받은 `changeObject` 함수에서는 객체는 변경 가능한 값이므로 직접 변경할 수 있기 때문에 재할당 없이 직접 할당된 객체를 변경했다.
+  - 객체 타입 인수는 참조 값이 복사되어 매개변수에 전달되므로 함수 몸체에서 참조 값을 통해 객체를 변경할 경우 원본이 훼손된다.
+- 객체를 함수의 인수로 전달하는 경우 참조에 의한 전달 방식으로 동작하기 때문에 부작용이 발생한다.
+- 이러한 문제의 해결 방법 중 하나는 객체를 불변 객체로 만들어 사용하는 것이다.
+  - 객체의 복사본을 새롭게 생성하는 비용은 들지만 객체를 마치 원시 값처럼 변경 불가능한 값으로 동작하게 만드는 것이다.
+  - 원본 객체를 깊은 복사하여 새로운 객체를 생성하고 재할당을 통해 교체하면 외부 상태가 변경되는 부수 효과를 없앨 수 있다.
+  - 이처럼 외부 상태를 변경하지 않고 외부 상태에 의존하지도 않는 함수를 순수 함수라 한다.
+
+<br>
+
+## 7. 다양한 함수의 형태
+
+### (1) 즉시 실행 함수
+
 (작성중...)
