@@ -533,6 +533,306 @@ console.log(obj1); // { a: 20 }
 
 ## 7. 다양한 함수의 형태
 
-### (1) 즉시 실행 함수
+### (1) 즉시 실행 함수 (IIFE)
 
-(작성중...)
+- <b>함수 정의와 동시에 즉시 호출</b>되는 함수를 <b>즉시 실행 함수(IIFE, Immediately Invoked Function Expression)</b>라고 한다.
+- 즉시 실행 함수는 단 한 번만 호출되며 다시 호출할 수 없다.
+- 즉시 실행 함수는 함수 이름이 없는 익명 함수를 사용하는 것이 일반적이다.
+  - 기명 함수로도 가능하지만 그룹 연산자 내의 기명 함수는 밖에서 다시 호출할 수 없다.
+- 즉시 실행 함수는 반드시 그룹 연산자 ( ... )로 감싸야 한다. 그렇지 않으면 에러가 발생한다.
+  - 그룹 연산자로 함수를 묶는 이유는 함수 리터럴을 평가해서 함수 객체를 생성하기 위해서다.
+
+```javascript
+// 익명 즉시 실행 함수
+(function() {
+  return 'abc';
+}());
+
+// 기명 즉시 실행 함수
+(function foo() {
+  return 'def';
+}());
+
+foo(); // ReferenceError: foo is not defined
+```
+
+```javascript
+function () { // SyntaxError: Function statements require a function name
+  // ...
+}();
+
+// 아래 코드에서 에러가 발생하는 이유는 자바스크립트의 ASI 기능에 의해 코드 블록을 받는 중괄호 뒤에 ';'이 암묵적으로 추가되기 때문이다.
+function foo() {
+  // ...
+}(); // SyntaxError: Unexpected token ')'
+```
+
+- 즉시 실행 함수도 일반 함수처럼 값을 반환할 수 있고 인수를 전달할 수도 있다.
+
+```javascript
+var res1 = (function() {
+  var a = 3;
+  var b = 4;
+  return a + b;
+}());
+
+console.log(res1); // 
+
+var res2 = (function(a + b) {
+  return a + b;
+}(4, 6));
+
+console.log(res2); // 10
+```
+
+- 즉시 실행 함수 내에 코드를 모아 두면 혹시 있을 수도 있는 변수나 함수 이름의 충돌을 방지할 수 있다.
+  - 즉시 실행 함수로 감싸면 그 안에 있는 모든 변수는 즉시 실행 함수의 지역 변수가 되어 전역 변수의 사용을 제한할 수 있다.
+
+```javascript
+(function() {
+  var a = 1; // 즉시 실행 함수의 지역 변수
+  // ...
+}());
+
+console.log(a); // ReferenceError a is not defined
+```
+
+<br>
+
+### (2) 재귀 함수 (Recursive Function)
+
+- 함수가 자기 자신을 호출하는 것을 재귀 호출이라 하고 <b>재귀 함수(Recursive Function)</b>는 자기 자신을 호출하는 행위, 즉 <b>재귀 호출을 수행</b>하는 함수를 말한다.
+- 아래 코드에서 `factorial` 함수 내부에서 자기 자신을 호출할 때 사용한 식별자` factorial`은 함수 이름이다.
+  - 함수 이름은 함수 몸체 내부에서만 유효하기 때문에 함수 내부에서는 함수 이름을 사용해 자기 자신을 호출할 수 있다.
+- 재귀 함수는 자기 자신을 무한 재귀 호출하기 때문에 반드시 함수 내에서 탈출 조건을 만들어야 하고 만약 탈출 조건이 없다면 stack overflow 에러가 발생한다.
+
+```javascript
+function factorial(n) {
+  // 탈출 조건: n이 1 이하일 때 재귀 호출을 멈춘다.
+  if (n <= 1) {
+    return 1;
+  }
+    
+  return n * factorial(n - 1);
+}
+
+console.log(factorial(0)); // 0! = 1
+console.log(factorial(1)); // 1! = 1
+console.log(factorial(2)); // 2! = 2 * 1 = 2
+console.log(factorial(3)); // 3! = 3 * 2 * 1 = 6
+```
+
+- 함수 표현식으로 정의한 함수 내부에서는 함수 이름은 물론 함수를 가리키는 식별자로도 자기 자신을 재귀 호출할 수 있다.
+  - 단, 함수 외부에서 함수를 호출할 때는 반드시 함수를 가리키는 식별자로 해야 한다.
+
+```javascript
+var factorial = function foo(n) {
+  if (n <= 1) {
+    return 1;
+  }
+  
+  // 함수를 가리키는 식별자로 자기 자신을 재귀 호출
+  return n * factorial(n - 1);
+    
+  // 함수 이름으로 자기 자신을 재귀 호출할 수 있다.
+  return n * foo(n - 1);
+}
+
+console.log(factorial(3)); // 3! = 3 * 2 * 1 = 6
+console.log(foo(3)); // ReferenceError: foo is not defined
+```
+
+<br>
+
+### (3) 중첩 함수 (Nested Function)
+
+- <b>함수 내부에 정의</b>된 함수를 <b>중첩 함수(Nested Function)</b> 또는 내부 함수(Inner Function)라 한다.
+- 일반적으로 중첩 함수는 자신을 포함하는 외부 함수를 돕는 헬퍼 함수의 역할을 한다.
+
+```javascript
+function outer() {
+  var x = 1;
+    
+  function inner() {
+    var y = 2;
+      
+    // 외부 함수의 변수를 참조할 수 있다.
+    console.log(x + y); // 3
+  }
+    
+  inner();
+}
+
+outer();
+```
+
+- ES6부터는 if 문이나 for 문 등의 코드 블록 내에서도 함수를 정의할 수 있지만 호이스팅으로 인해 혼란이 발생할 수 잇으므로 이와 같은 패턴은 바람직하지 않다.
+- 그리고 중첩 함수를 사용하는 경우 `this` 바인딩 관점에서도 다소 다르게 동작할 수 있기 때문에 이 부분은 주의해야 한다.
+
+```javascript
+var obj = {
+  a: 1,
+  b: function() {
+    console.log(this.a);
+      
+    function c() {
+      console.log(this.a);
+    }
+      
+    c();
+  },
+};
+
+obj.b(); // ?
+```
+
+<br>
+
+### (4) 콜백 함수 (Callback Function)
+
+- <b>함수의 매개변수를 통해 다른 함수의 내부로 전달되는 함수</b>를 <b>콜백 함수 (Callback Function)</b>라고 하며, <b>매개변수를 통해 함수의 외부에서 콜백 함수를 전달받은 함수</b>를 <b>고차 함수(Higher-Order Function, HOF)</b>라고 한다.
+- 매개변수를 통해 함수를 전달받거나 반환값으로 함수를 반환하는 함수를 함수형 프로그래밍 패러다임에서 고차 함수라 한다.
+
+```javascript
+// repeat 함수가 고차 함수
+function repeat(n, f) {
+  for (var i = 0; i < n; i += 1) {
+    f(i); // i를 전달하면서 함수 f를 호출
+  }
+}
+
+// logAll 함수가 콜백 함수
+var logAll = function(i) {
+  console.log(i);
+}
+
+repeat(5, logAll); // 0 1 2 3 4
+
+var logOdds = function(i) {
+  if (i % 2) {
+    console.log(i);
+  }
+}
+
+repeat(5, logOdds); // 1 3
+```
+
+---
+
+### :heavy_plus_sign: 고차 함수 - 함수를 값으로 다루는 함수
+
+> 참고로 `log` 함수는 `console.log`를 출력하는 함수로 간주하면 됩니다.
+
+- 함수를 인자로 받아서 실행하는 함수(applicative programming)
+
+```javascript
+const apply1 = f => f(1); // 함수를 받아서 함수에 1을 적용하는 apply1 함수
+const add2 = a => a + 2;
+
+log(apply1(add2)); // 3으로 평가됨
+log(apply1(a => a - 1)); // 0으로 평가됨
+```
+
+```javascript
+const times = (f, n) => {
+  let i = -1;
+  while (++i < n) f(i);
+} // n 만큼 함수 f를 실행하는 times 함수
+
+times(log, 3); // 0, 1, 2가 차례대로 출력됨
+times(a => log(a + 10), 3); // 10, 11, 12가 차례대로 출력됨
+```
+
+- 함수를 만들어서 리턴하는 함수 (클로저를 만들어 리턴하는 함수)
+  - 클로저는 '함수'와 '그 함수가 선언될 당시의 환경정보' 사이의 조합 즉, 선언 당시의 환경에 대한 정보를 담은 객체(구성 환경)를 말한다.
+
+```javascript
+const addMaker = a => b => a + b; // 함수를 리턴하는 함수
+// 즉 addMaker는 함수를 리턴하는 함수이자 b => a + b 함수 내에서 a를 기억하는 클로저이다.
+// 클로저는 함수가 만들어질 때 환경인 a와 b => a + b 함수 자체 객체를 함께 통칭해서 말한다.
+// 함수가 함수를 리턴할 때는 클로저를 만들어서 리턴한다.
+
+const add10 = addMaker(10);
+log(add10); // b => a + b 함수를 리턴함
+log(add10(5)); // 15가 출력됨
+```
+
+---
+
+- 콜백 함수는 고차 함수에 전달되어 헬퍼 함수의 역할을 하고 콜백 함수는 함수 외부에서 고차 함수 내부로 주입되어 자유롭게 교체할 수 있다.
+  - 즉, <u>고차 함수는 콜백 함수를 자신의 일부분으로 합성한다.</u>
+- 고차 함수는 매개변수를 통해 전달받은 콜백 함수의 호출 시점을 결정해서 호출한다.
+  - 다시 말해, 콜백 함수는 고차 함수에 의해 호출되며 이때 고차 함수는 필요에 따라 콜백 함수에 인수를 전달할 수 있다.
+    - 참고로 엄밀히 말하면 `setTimeout` 함수의 콜백 함수가 `setTimeout` 함수를 호출하지 않는 것과 같이 모든 콜백 함수가 고차 함수에 의해 호출되는 것이 아니다.
+  - 따라서 고차 함수에 콜백 함수를 전달할 때 콜백 함수를 호출하지 않고 <u>함수 자체를 전달</u>해야 한다.
+- 보통은 콜백 함수가 고차 함수 내부에서만 호출된다면 콜백 함수를 익명 함수 리터럴로 정의하면서 곧바로 고차 함수에 전달하지만 만약 여러 번 호출되어야 한다면 별도의 콜백 함수를 정의해서 고차 함수에 넘기는 것이 좋다.
+- 콜백 함수의 다양한 예시
+
+```javascript
+// (1) DOM 요소 이벤트 핸들러 함수
+document.querySelector('.btn').addEventListener('click', function(){
+  console.log('clicked!');
+});
+
+// (2) 비동기 처리
+setTimeout(function() {
+  console.log('1초 경과!');
+}, 1000);
+
+// (3) 배열 고차 함수
+var res = [1, 2, 3].map(function (item) {
+  return item * 3;
+});
+console.log(res); // [3, 6, 9]
+```
+
+<br>
+
+### (5) 순수 함수 (Pure Function)와 비순수 함수(Impure Function)
+
+- 용어 정의
+
+| 용어                         | 정의                                                         |
+| ---------------------------- | ------------------------------------------------------------ |
+| 순수 함수(Pure Function)     | 외부 상태에 의존하지도 않고 변경하지도 않는, 즉 부수 효과가 없는 함수 |
+| 비순수 함수(Impure Function) | 외부 상태에 의존하거나 외부 상태를 변경하는, 즉 부수 효과가 있는 함수 |
+
+- 순수 함수는 동일한 인수가 전달되면 언제나 동일한 값을 반환하는 함수다.
+  - 즉, 순수 함수는 어떤 외부 상태에도 의존하지 않고 오직 매개변수를 통해 함수 내부로 전달된 인수에게만 의존해 반환값을 만든다.
+- 반면 비순수 함수는 함수 내부에서 외부 상태를 직접 참조하여 외부 상태에 의존하기 때문에 반환값이 변할 수 있고, 외부 상태도 변경될 수 있다.
+  - 함수 내부에서 외부 상태를 직접 참조하지 않더라도 매개변수를 통해 객체를 전달받으면 이 경우도 비순수 함수가 된다.
+
+```javascript
+var count = 0;
+
+// 순수 함수
+function increase(n) {
+  return ++n;
+}
+
+// 순수 함수가 반환한 결과값을 변수에 재할당해서 상태를 변경
+count = increase(count);
+console.log(count); // 1
+
+count = increase(count);
+console.log(count); // 2
+```
+
+```javascript
+var count = 0;
+
+// 비순수 함수
+function increase() {
+  return ++count;
+}
+
+// 비순수 함수는 외부 상태(count)를 변경하므로 상태 변화를 추적하기 어려워진다.
+increase();
+console.log(count); // 1
+
+increase();
+console.log(count); // 2
+```
+
+- 함수형 프로그래밍은 순수 함수와 보조 함수의 조합을 통해 외부 상태를 변경하는 부수 효과를 최소화해서 불변성(immutability)을 지향하는 프로그래밍 패러다임이다.
+  - 로직 내에 존재하는 조건문과 반복문을 제거해서 복잡성을 해결하며, 변수 사요을 억제하거나 생명주기를 최소화해서 상태 변경을 피해 오류를 최소화하는 것을 목표로 한다.
