@@ -74,6 +74,7 @@ console.log(str); // 'abcde'
 - 유사 배열 객체가 되기 위한 조건
   - 반드시 <b>`length` 프로퍼티</b>를 갖고 있어야 한다.
   - 가급적이면 index 번호가 0번부터 시작해서 1씩 증가해야 한다. 만약 이를 지키지 않게되면 예상치 못한 결과가 생긴다.
+  - 그리고 객체에 선언한 키-값 쌍의 개수 만큼 `length` 프로퍼티의 값으로 지정해주는 것이 좋다.
 
 ```javascript
 // 유사 배열 객체 예시
@@ -107,6 +108,18 @@ console.log(arrayLike); // {0: 1, 2: 2, 3: 3, length: 3}
 console.log(Array.from(arrayLike)); // [1, undefined, 2]
 ```
 
+```javascript
+// length 프로퍼티가 객체에 선언한 키-값 쌍의 개수보다 적은 경우
+const arrayLike = {
+  0: 1,
+  1: 2,
+  2: 3,
+  length: 1,
+};
+
+console.log(Array.from(arrayLike)); // [1]
+```
+
 - 일반적으로 유사 배열 객체는 이터러블이 아닌 일반 객체이므로 `Symbol.iterator` 메서드가 없어 `for ... of` 문으로 순회할 수 없다.
 
 ```javascript
@@ -126,7 +139,7 @@ for (const item of arrayLike) {
   - 왜냐하면 이 객체에 `Symbol.iterator` 메서드를 구현되어 있기 때문이다.
   - 또한 이터러블이 된 이후에도 `length` 프로퍼티를 가지며 인덱스로 접근할 수 있는 것에는 변함이 없어 이들은 유사 배열 객체이면서 이터러블인 것이다.
 - 모든 유사 배열 객체가 이터러블인 것은 아니기 때문에 이를 해결하기 위해 ES6에서 `Array.from()` 메서드가 등장했다.
-  - 이는 유사 배열 객체를 진짜 배열로 변환해주는데 자세한 내용은 [MDN 공식 문서](https://developer.mozilla.org/ko/docs/Web/JavaScript/Reference/Global_Objects/Array/from)를 통해 살펴보자.
+  - 이는 유사 배열 객체를 진짜 배열로 변환(`Symbol.iterator` 메서드도 있음해주는데 자세한 내용은 [MDN 공식 문서](https://developer.mozilla.org/ko/docs/Web/JavaScript/Reference/Global_Objects/Array/from)를 통해 살펴보자.
 
 ```javascript
 const arrayLike = {
