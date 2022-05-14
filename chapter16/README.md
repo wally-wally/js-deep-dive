@@ -123,4 +123,92 @@ Object.getOwnPropertyDescriptor(user, 'userInfo'); // {enumerable: true, configu
 
 ## 4. 프로퍼티 정의
 
+- 프로퍼티 정의란 새로운 프로퍼티를 추가하면서 프로퍼티 어트리뷰트를 명시적으로 정의하거나, 기존 프로퍼티의 프로퍼티 어트리뷰트를 재정의하는 것을 말한다.
+- `Object.defineProperty` 메서드를 사용하면 프로퍼티 어트리뷰트를 정의할 수 있다.
+  - 인수로는 객체의 참조와 데이터 프로퍼티의 키인 문자열, 프로퍼티 디스크립터 객체를 전달한다.
+
+| 프로퍼티 디스크립터 객체의 프로퍼티 | 대응하는 프로퍼티 어트리뷰트 | 생략했을 때의 기본값 |
+| ----------------------------------- | ---------------------------- | -------------------- |
+| `value`                             | `[[Value]]`                  | `undefined`          |
+| `get`                               | `[[Get]]`                    | `undefined`          |
+| `set`                               | `[[Set]]`                    | `undefined`          |
+| `writable`                          | `[[Writable]]`               | `false`              |
+| `enumerable`                        | `[[Enumerable]]`             | `false`              |
+| `configurable`                      | `[[Configurable]]`           | `false`              |
+
+```javascript
+const obj = {};
+
+// 데이터 프로퍼티 정의
+Object.defineProperty(obj, 'id', {
+  value: 1,
+  writable: true,
+  enumerable: false,
+  configurable: true
+});
+Object.defineProperty(obj, 'name', {
+  value: 'Macbook',
+  writable: false,
+  enumerable: true,
+  configurable: false
+});
+
+// writable이 false인 경우 해당 프로퍼티의 value의 값을 변경할 수 없다.
+// 이때 값을 변경하면 에러는 발생하지 않고 무시된다.
+console.log(obj); // {name: "Macbook", id: 1}
+obj.name = 'Macbook2';
+console.log(obj); // {name: "Macbook", id: 1}
+
+// enumerable이 false인 경우 해당 프로퍼티는 for ... in 문이나 Object.keys 등으로 열거할 수 없다.
+for (const p in obj) {
+  console.log(p); // 'name'
+}
+
+// configurable이 false인 경우 해당 프로퍼티를 삭제할 수 없다.
+// 이때 프로퍼티를 삭제하면 에러는 발생하지 않고 무시된다.
+delete obj.name;
+console.log(obj.name); // 'Macbook'
+// 그리고 configurable이 false인 경우 해당 프로퍼티를 재정의할 수 없다.
+Object.defineProperty(obj, 'name', {writable: true}); // Uncaught TypeError: Cannot redefine property: name
+
+// 접근자 프로퍼티 정의
+Object.defineProperty(obj, 'c', {
+  get() {
+    return `${this.a}-${this.b}`;
+  },
+  set({a, b}) {
+    this.a = a;
+    this.b = b;
+  },
+  enumerable: true,
+  configurable: true,
+});
+```
+
+- `Object.defineProperty` 메서드는 한 번에 하나의 프로퍼티만 정의할 수 있다.
+- `Object.defineProperties` 메서드를 사용하면 여러 개의 프로퍼티를 한 번에 정의할 수 있다.
+
+```javascript
+const newObj = Object.defineProperties({}, {
+  id: {
+    value: 1,
+    writable: true,
+    enumerable: false,
+    configurable: true
+  },
+  name: {
+    value: 'Macbook',
+    writable: false,
+    enumerable: true,
+    configurable: false
+  }
+});
+
+console.log(newObj); // {name: "Macbook", id: 1}
+```
+
+<br>
+
+## 5. 객체 변경 방지
+
 (작성중...)
