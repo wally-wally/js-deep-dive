@@ -211,4 +211,180 @@ console.log(newObj); // {name: "Macbook", id: 1}
 
 ## 5. 객체 변경 방지
 
-(작성중...)
+### (1) 객체 확장 금지
+
+- <b>`Object.preventExtensions` 메서드</b>는 객체의 <b>확장을 금지</b>한다.
+  - 기존 프로퍼티는 그대로 두고 추가하는 동작만 할 수 없도록 막는 기능을 한다.(즉, 할당, 삭제, 속성 변경은 모두 가능)
+  - 프로퍼티 동적 추가와 `Object.defineProperty` 메서드로 추가하는 두 방법 모두 금지된다.
+- 확장 금지 여부는 <b>`Object.isExtensible` 메서드</b>로 알 수 있다.
+
+```javascript
+var myObj = {
+  a: 2,
+};
+
+Object.preventExtensions(myObj);
+myObj.b = 3; // (기본적으로 무시되나 strict mode에서는 에러)
+console.log(myObj.b); // 에러는 발생하지 않으나 해당 프로퍼티가 없으므로 undefined가 출력된다.(단, strict mode에서는 TypeError)
+```
+
+<br>
+
+### (2) 객체 밀봉
+
+- <b>`Object.seal` 메서드</b>는 객체를 <b>밀봉(봉인)</b>한다.
+  - 즉, 프로퍼티 추가 및 삭제와 프로퍼티 어트리뷰트 재정의가 금지된다.
+  - 밀봉된 객체는 읽기와 쓰기만 가능하다.
+- `Object.preventExtensions` 메서드를 적용하고 데이터 프로퍼티를 모두 `configurable: false`로 처리하는 액션과 동일한 효과를 가진다.
+- 밀봉 여부는 <b>`Object.isSealed` 메서드</b>로 알 수 있다.
+
+```javascript
+var myObj = {};
+Object.defineProperty(myObj, 'num', {
+  value: 10,
+  writable: true,
+  enumerable: true,
+  configurable: true,
+});
+
+Object.seal(myObj);
+
+// 프로퍼티 읽기 가능
+console.log(myObj.num); // 10
+
+// 프로퍼티 값 변경 가능
+myObj.num = 20;
+console.log(myObj.num); // 20
+
+// 새로운 프로퍼티 추가 불가능(기본적으로 무시되나 strict mode에서는 에러)
+myObj.num2 = 30;
+console.log(myObj); // {num: 20}
+
+// 프로퍼티 속성 변경 불가능(Object.seal()로 봉인하지 않았으면 가능)
+Object.defineProperty(myObj, 'num', { enumerable: false }); // Uncaught TypeError: Cannot redefine property: num
+
+// 프로퍼티 삭제 불가능(기본적으로 무시되나 strict mode에서는 에러)
+delete myObj.num;
+console.log(myObj); // {num: 20}
+```
+
+<br>
+
+### (3) 객체 동결
+
+- <b>`Object.freeze` 메서드</b>를 이용해서 프로퍼티 <b>읽기만 가능</b>한 동결 객체를 만들 수 있다.
+- `Object.seal` 메서드를 적용하고 데이터 프로퍼티를 모두 `writable: false`로 처리하는 액션과 동일한 효과를 가진다.
+- 동결 여부는 <b>`Object.isFrozen` 메서드</b>로 알 수 있다.
+
+```javascript
+var obj = {
+  a: {
+    x: 2,
+  },
+  b: {
+    y : 3
+  },
+  c: 10,
+};
+
+Object.freeze(obj);
+
+// 프로퍼티 추가 금지(기본적으로 무시되나 strict mode에서는 에러)
+obj.d = 20;
+console.log(obj); // { a: {x: 2}, b: {y: 3}, c: 10 }
+
+// 프로퍼티 삭제 금지(기본적으로 무시되나 strict mode에서는 에러)
+delete obj.c;
+console.log(obj); // { a: {x: 2}, b: {y: 3}, c: 10 }
+
+// 프로퍼티 값 갱신 금지(기본적으로 무시되나 strict mode에서는 에러)
+obj.c = 20;
+console.log(obj); // { a: {x: 2}, b: {y: 3}, c: 10 }
+
+// 프로퍼티 어트리뷰트 재정의 금지
+Object.defineProperty(obj, 'c', { configurable: true }); // Uncaught TypeError: Cannot redefine property: c
+
+console.log(obj.a); // {x: 2}
+
+obj.a = 5;
+console.log(obj); // { a: {x: 2}, b: {y: 3}, c: 10 }
+
+// [주의!] 얕은 불변성만 지원하므로 그 안의 다른 참조 타입의 값이 있다면 재귀적으로 반복하면서 객체를 완전히 동결해야 한다.
+obj.a.x = 3;
+console.log(obj); // { a: {x: 3}, b: {y: 3}, c: 10 }
+```
+
+- 이 메서드와 `const` 변수 선언 키워드를 사용하여 주로 값이 변하지 않는 상수를 관리하는 객체를 만들 수 있다.
+
+```javascript
+/** 메일 쓰기 페이지 모드 상수 값 */
+const MAIL_WRITE_MODE = {
+  /** 신규 작성 */
+  new: 'new',
+  /** 답장 */
+  reply: 'reply',
+  /** 전체 답장 */
+  reply_all: 'reply_all',
+  /** 전달 */
+  forward: 'forward',
+  /** 임시 보관함에서 가져온 메일 */
+  temp: 'temp',
+  /** 재발송 */
+  resend: 'resend',
+};
+
+Object.freeze(MAIL_WRITE_MODE);
+
+export {
+  MAIL_WRITE_MODE,
+}
+```
+
+<br>
+
+### (4) 불변 객체
+
+- 위 예제에서 마지막 부분에서 봤다시피 지금까지 살펴본 객체 변경 방지 메서드들은 <b>얕은 불변성</b>만 지원한다.
+- 따라서 `Object.freeze` 메서드로 객체를 동결하여도 중첩 객체까지 동결할 수 없다.
+- 이를 해결하기 위해 중첩 객체의 모든 프로퍼티에 <b>재귀적으로 `Object.freeze` 메서드를 호출</b>해야 한다.
+
+```javascript
+function deepFreeze(target) {
+  // 객체가 아니거나 동결된 객체는 무시하고 객체이고 동결되지 않은 객체만 동결한다.
+  if (target && typeof target === 'object' && !Object.isFrozen(target)) {
+    Object.freeze(target);
+    // 모든 프로퍼티를 순회하며 재귀적으로 동결한다.
+    Object.keys(target).forEach(key => deepFreeze(target[key]));
+  }
+  return target;
+}
+
+const obj = {
+  a: {
+    x: 2,
+  },
+  b: {
+    y : 3
+  },
+};
+
+deepFreeze(obj);
+
+console.log(Object.isFrozen(obj)); // true
+console.log(Object.isFrozen(obj.a)); // true
+
+obj.a.x = 4;
+console.log(obj); // { a: {x: 2}, b: {y: 3} }
+```
+
+<br>
+
+### :pushpin: 객체 변경 방지 메서드 정리
+
+| 동작                     | 일반 객체 | 동결 객체(freeze) | 봉인 객체(seal) | 확장 금지 객체(preventExtensions) |
+| ------------------------ | --------- | ----------------- | --------------- | --------------------------------- |
+| 프로퍼티 추가            | O         | X                 | X               | X                                 |
+| 프로퍼티 값 읽기         | O         | O                 | O               | O                                 |
+| 프로퍼티 값 설정(쓰기)   | O         | X                 | O               | O                                 |
+| 프로퍼티 어트리뷰트 변경 | O         | X                 | X               | O                                 |
+| 프로퍼티 삭제            | O         | X                 | X               | O                                 |
